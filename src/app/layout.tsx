@@ -1,9 +1,8 @@
-import "~/styles/globals.css";
-
-import { GeistSans } from "geist/font/sans";
+import { Rubik } from "next/font/google";
 import { type Metadata } from "next";
-
 import { TRPCReactProvider } from "~/trpc/react";
+import "~/styles/globals.css";
+import Navigation from "~/components/Navigation";
 
 export const metadata: Metadata = {
   title: "Create T3 App",
@@ -11,12 +10,17 @@ export const metadata: Metadata = {
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
+const rubik = Rubik({
+  subsets: ["latin"],
+});
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${GeistSans.variable}`}>
-      <body>
+    <html lang="en" className={`${rubik.className} bg-zinc-50`}>
+      <body className="w-full">
+        <Navigation />
         <TRPCReactProvider>{children}</TRPCReactProvider>
       </body>
     </html>
