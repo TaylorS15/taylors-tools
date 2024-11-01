@@ -19,7 +19,7 @@ export default function Home() {
         </div>
 
         {AVAILABLE_TOOLS.map((tool) => (
-          <ToolCard {...tool} />
+          <ToolCard key={tool.name} {...tool} />
         ))}
       </div>
 
@@ -52,7 +52,7 @@ export default function Home() {
 
           {AVAILABLE_TOOLS.map((tool) => {
             return (
-              <div className="flex w-full gap-8 border-b p-2">
+              <div key={tool.name} className="flex w-full gap-8 border-b p-2">
                 <p className="w-max flex-1">{tool.name}</p>
                 <p className="w-16 text-center text-zinc-600 md:w-28">
                   ${tool.pricing.single}
