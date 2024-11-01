@@ -57,7 +57,7 @@ export default function Navigation() {
             </Link>
           </NavigationMenuItem>
           <NavigationMenuItem>
-            <Link href="/" legacyBehavior passHref>
+            <Link href="/api/auth/signin" legacyBehavior passHref>
               <NavigationMenuLink
                 className={cn(
                   navigationMenuTriggerStyle(),
