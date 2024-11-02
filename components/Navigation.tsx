@@ -9,9 +9,9 @@ import {
   NavigationMenuLink,
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
-} from "~/components/ui/navigation-menu";
-import { cn } from "~/lib/utils";
-import { AVAILABLE_TOOLS } from "~/schemas";
+} from "@/components/ui/navigation-menu";
+import { cn } from "@/lib/utils";
+import { SignInButton } from "@clerk/nextjs";
 
 export default function Navigation() {
   return (
@@ -23,7 +23,7 @@ export default function Navigation() {
               <NavigationMenuLink
                 className={cn(
                   navigationMenuTriggerStyle(),
-                  "bg-white/0 text-base font-normal hover:bg-none hover:text-blue-500",
+                  "bg-white/0 text-base hover:bg-none hover:text-blue-500",
                 )}
               >
                 Home
@@ -31,42 +31,30 @@ export default function Navigation() {
             </Link>
           </NavigationMenuItem>
           <NavigationMenuItem>
-            <NavigationMenuTrigger className="bg-white/0 text-base font-normal hover:text-blue-500">
+            <NavigationMenuTrigger className="bg-white/0 text-base  hover:text-blue-500">
               Tools
             </NavigationMenuTrigger>
             <NavigationMenuContent>
               <ul className="grid max-h-96 w-[400px] gap-3 overflow-y-scroll p-4 md:max-h-max md:w-[500px] md:grid-cols-2 md:overflow-y-clip lg:w-[600px]">
-                {AVAILABLE_TOOLS.map((tool) => (
+                {/** AVAILABLE_TOOLS.map((tool) => (
                   <ListItem key={tool.name} href={tool.url} title={tool.name}>
                     {tool.description}
                   </ListItem>
-                ))}
+                ))*/}
               </ul>
             </NavigationMenuContent>
           </NavigationMenuItem>
           <NavigationMenuItem>
-            <Link href="/" legacyBehavior passHref>
-              <NavigationMenuLink
+            <SignInButton>
+              <button
                 className={cn(
                   navigationMenuTriggerStyle(),
-                  "bg-white/0 text-base font-normal hover:text-blue-500",
-                )}
-              >
-                Pricing
-              </NavigationMenuLink>
-            </Link>
-          </NavigationMenuItem>
-          <NavigationMenuItem>
-            <Link href="/api/auth/signin" legacyBehavior passHref>
-              <NavigationMenuLink
-                className={cn(
-                  navigationMenuTriggerStyle(),
-                  "bg-white/0 text-base font-normal hover:text-blue-500",
+                  "bg-white/0 text-base  hover:text-blue-500",
                 )}
               >
                 Login
-              </NavigationMenuLink>
-            </Link>
+              </button>
+            </SignInButton>
           </NavigationMenuItem>
         </NavigationMenuList>
       </NavigationMenu>

@@ -1,7 +1,9 @@
-import { AVAILABLE_TOOLS } from "@/app/schemas";
 import ToolCard from "@/components/ToolCard";
+import { getTools } from "@/app/queries";
 
-export default function Home() {
+export default async function Home() {
+  const tools = await getTools();
+
   return (
     <main className="flex w-full flex-col items-center gap-24 px-4 pb-24 pt-24 md:px-[10vw]">
       <div className="grid grid-flow-row grid-cols-1 gap-4 sm:justify-items-center sm:gap-8 md:grid-cols-2 lg:grid-cols-3">
@@ -18,7 +20,7 @@ export default function Home() {
           </h2>
         </div>
 
-        {AVAILABLE_TOOLS.map((tool) => (
+        {tools.map((tool) => (
           <ToolCard key={tool.name} {...tool} />
         ))}
       </div>
@@ -50,15 +52,15 @@ export default function Home() {
             </p>
           </div>
 
-          {AVAILABLE_TOOLS.map((tool) => {
+          {tools.map((tool) => {
             return (
               <div key={tool.name} className="flex w-full gap-8 border-b p-2">
                 <p className="w-max flex-1">{tool.name}</p>
                 <p className="w-16 text-center text-zinc-600 md:w-28">
-                  ${tool.pricing.single}
+                  ${tool.pricing_single / 100}
                 </p>
                 <p className="w-16 text-center text-zinc-600 md:w-44">
-                  {tool.pricing.credits}
+                  {tool.pricing_credits}
                 </p>
               </div>
             );
