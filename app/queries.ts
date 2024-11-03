@@ -1,24 +1,24 @@
-import { z } from "zod";
+import { cache } from "react";
 import { unstable_cache } from "next/cache";
-import { toolSchema } from "@/app/schemas";
 import { turso } from "@/lib/db";
+import { z } from "zod";
+import { toolSchema } from "@/app/schemas";
 
-export const getTools: () => Promise<z.infer<typeof toolSchema>[]> =
+export const getTools: () => Promise<z.infer<typeof toolSchema>[]> = cache(
   unstable_cache(
     async () => {
       try {
         const response = await turso.execute("SELECT * FROM tools");
+        console.log(Date.now(), "getTools");
         const validatedTools = response.rows.map((row) =>
           toolSchema.parse(row),
         );
-        console.log(validatedTools);
-        console.log("test");
         return validatedTools;
       } catch (error) {
-        console.error(`Error fetching tools: ${error}`);
         return [];
       }
     },
     ["tools"],
-    { revalidate: 3600, tags: ["tools"] },
-  );
+    { revalidate: 3600, tags: ["posts"] },
+  ),
+);

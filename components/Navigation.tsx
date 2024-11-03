@@ -1,4 +1,3 @@
-"use client";
 import Link from "next/link";
 import { forwardRef } from "react";
 import {
@@ -12,8 +11,10 @@ import {
 } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
 import { SignInButton } from "@clerk/nextjs";
+import { getTools } from "@/app/queries";
 
-export default function Navigation() {
+export default async function Navigation() {
+  const tools = await getTools();
   return (
     <div className="fixed z-50 flex h-14 w-full items-center px-3 shadow-md backdrop-blur-lg md:px-[10vw]">
       <NavigationMenu>
@@ -36,11 +37,11 @@ export default function Navigation() {
             </NavigationMenuTrigger>
             <NavigationMenuContent>
               <ul className="grid max-h-96 w-[400px] gap-3 overflow-y-scroll p-4 md:max-h-max md:w-[500px] md:grid-cols-2 md:overflow-y-clip lg:w-[600px]">
-                {/** AVAILABLE_TOOLS.map((tool) => (
+                {tools.map((tool) => (
                   <ListItem key={tool.name} href={tool.url} title={tool.name}>
                     {tool.description}
                   </ListItem>
-                ))*/}
+                ))}
               </ul>
             </NavigationMenuContent>
           </NavigationMenuItem>

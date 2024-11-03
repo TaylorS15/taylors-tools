@@ -38,8 +38,8 @@ export default async function Home() {
         <p className="max-w-xl text-left text-base text-zinc-600 drop-shadow-md lg:text-lg">
           You can use any tool with or without an account, and every tool has a
           fixed cost. Although you can create an account and add credits for
-          cheaper use, single use for any tool is available and you're charged
-          after you've previewed the final output.
+          cheaper use, single use for any tool is available and you&apos;re
+          charged after you&apos;ve previewed the final output.
         </p>
         <div className="mx-auto mt-6 flex w-full flex-col rounded-md border-2 shadow-lg md:max-w-3xl">
           <div className="flex w-full gap-8 border-b p-2">
