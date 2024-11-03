@@ -15,6 +15,7 @@ export const getTools: () => Promise<z.infer<typeof toolSchema>[]> = cache(
         );
         return validatedTools;
       } catch (error) {
+        console.error(error)
         return [];
       }
     },
