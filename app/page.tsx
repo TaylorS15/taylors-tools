@@ -10,7 +10,7 @@ export default async function Home() {
       <div className="grid grid-flow-row grid-cols-1 gap-4 sm:justify-items-center sm:gap-8 md:grid-cols-2 lg:grid-cols-3">
         <div className="flex h-80 flex-col items-center justify-center text-zinc-900 md:col-start-1 md:row-span-1 md:row-start-1 lg:col-span-2 lg:col-start-2 lg:row-start-1 xl:col-start-2 xl:row-start-1">
           <p className="text-xl font-semibold  lg:text-2xl">Welcome to</p>
-          <h1 className="bg-gradient-to-br from-blue-500 from-10% via-cyan-500 to-blue-500 to-90% bg-clip-text text-center text-6xl font-bold text-transparent drop-shadow-md  sm:text-7xl">
+          <h1 className="bg-gradient-to-br from-blue-500 from-10% via-cyan-500 to-blue-500 to-90% bg-clip-text text-center text-6xl font-bold text-transparent drop-shadow-md  sm:text-8xl lg:text-8xl">
             Taylors Tools
           </h1>
           <h2 className="mt-2 max-w-lg text-center text-2xl font-medium  lg:text-3xl">
@@ -28,13 +28,13 @@ export default async function Home() {
         <h3 className="text-left text-xl font-semibold text-blue-500  lg:text-2xl">
           Pricing
         </h3>
-        <p className="text-left -mt-3 max-w-xl text-3xl font-medium  md:text-4xl">
+        <p className="-mt-3 max-w-xl text-left text-3xl font-medium  md:text-4xl">
           Simple and cost effective pricing.
         </p>
-        <p className="text-left -mt-5 max-w-xl text-3xl font-medium  md:text-4xl">
+        <p className="-mt-5 max-w-xl text-left text-3xl font-medium  md:text-4xl">
           With or without an account.
         </p>
-        <p className="text-left max-w-xl text-base text-zinc-600  lg:text-lg">
+        <p className="max-w-xl text-left text-base text-zinc-600  lg:text-lg">
           You can use any tool with or without an account, and every tool has a
           fixed cost. Although you can create an account and add credits for
           cheaper use, single use for any tool is available and you&apos;re
@@ -70,10 +70,10 @@ export default async function Home() {
         <h3 className="text-left text-xl font-semibold text-blue-500  lg:text-2xl">
           Requests
         </h3>
-        <p className="text-left -mt-3 max-w-xl text-3xl font-medium  md:text-4xl">
+        <p className="-mt-3 max-w-xl text-left text-3xl font-medium  md:text-4xl">
           Need another tool?
         </p>
-        <p className="text-left -mt-5 max-w-xl text-3xl font-medium  md:text-4xl">
+        <p className="-mt-5 max-w-xl text-left text-3xl font-medium  md:text-4xl">
           Send a request below!
         </p>
         <RequestForm />
