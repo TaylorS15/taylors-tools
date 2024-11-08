@@ -11,3 +11,4 @@ export const toolSchema = z.object({
   pricing_credits: z.number(),
   cta: z.string().min(1).max(255),
 });
+
