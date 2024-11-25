@@ -1,7 +1,7 @@
 export default function TermsAndConditions() {
   return (
-    <main className="flex w-full flex-col items-center gap-12 px-4 pb-24 pt-24 text-lg md:px-[10vw]">
-      <h1 className="text-3xl font-semibold text-blue-500">
+    <main className="flex w-full flex-col items-center gap-12 text-lg">
+      <h1 className="text-3xl font-semibold text-blue-600">
         Taylors Tools Terms of Service Agreement
       </h1>
       <p className="text-xl">TERMS OF SERVICE AGREEMENT</p>

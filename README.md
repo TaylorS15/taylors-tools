@@ -1,12 +1,16 @@
 - Images to pdf converter
+    - Crop and rotate images before uploading
 - Mass email service
 - pdf editor
 - one time fax service
 - pdf signing
 - image converter
+- image resizing
 - AI image categorization
 - File moving between devices
 - Form to let users request tools
 - "t-t"
 - Lie about usage
 - Give people usage id if not signed in, put in url, and tell people not to leave page 
+- AI generated transcripts with summaries and timestamps
+- File compression

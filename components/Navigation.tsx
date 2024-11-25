@@ -38,7 +38,11 @@ export default async function Navigation() {
             <NavigationMenuContent>
               <ul className="grid max-h-96 w-[400px] gap-3 overflow-y-scroll p-4 md:max-h-max md:w-[500px] md:grid-cols-2 md:overflow-y-clip lg:w-[600px]">
                 {tools.map((tool) => (
-                  <ListItem key={tool.name} href={tool.url} title={tool.name}>
+                  <ListItem
+                    key={tool.name}
+                    href={`tool/${tool.url}`}
+                    title={tool.name}
+                  >
                     {tool.description}
                   </ListItem>
                 ))}

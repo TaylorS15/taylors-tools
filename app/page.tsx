@@ -6,11 +6,11 @@ export default async function Home() {
   const tools = await getTools();
 
   return (
-    <main className="flex w-full flex-col items-center gap-24 px-4 pb-24 pt-24 md:px-[10vw]">
+    <main className="flex w-full flex-col items-center gap-24">
       <div className="grid grid-flow-row grid-cols-1 gap-4 sm:justify-items-center sm:gap-8 md:grid-cols-2 lg:grid-cols-3">
-        <div className="flex h-80 flex-col items-center justify-center text-zinc-900 md:col-start-1 md:row-span-1 md:row-start-1 lg:col-span-2 lg:col-start-2 lg:row-start-1 xl:col-start-2 xl:row-start-1">
+        <div className="flex h-72 flex-col items-center justify-center text-zinc-900 sm:h-80 md:col-start-1 md:row-span-1 md:row-start-1 lg:col-span-2 lg:col-start-2 lg:row-start-1 xl:col-start-2 xl:row-start-1">
           <p className="text-xl font-semibold  lg:text-2xl">Welcome to</p>
-          <h1 className="bg-gradient-to-br from-blue-500 from-10% via-cyan-500 to-blue-500 to-90% bg-clip-text text-center text-6xl font-bold text-transparent drop-shadow-md  sm:text-8xl lg:text-8xl">
+          <h1 className="bg-gradient-to-br from-blue-500 from-10% via-cyan-500 to-blue-500 to-90% bg-clip-text text-center text-6xl font-bold text-transparent drop-shadow-md  sm:text-7xl lg:text-8xl">
             Taylors Tools
           </h1>
           <h2 className="mt-2 max-w-lg text-center text-2xl font-medium  lg:text-3xl">

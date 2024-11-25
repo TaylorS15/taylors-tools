@@ -1,3 +1,4 @@
+"use server";
 import { cache } from "react";
 import { unstable_cache } from "next/cache";
 import { turso } from "@/lib/db";
@@ -15,7 +16,7 @@ export const getTools: () => Promise<z.infer<typeof toolSchema>[]> = cache(
         );
         return validatedTools;
       } catch (error) {
-        console.error(error)
+        console.error(error);
         return [];
       }
     },
