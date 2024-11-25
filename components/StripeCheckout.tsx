@@ -10,7 +10,7 @@ export default function StripeCheckout() {
   const elements = useElements();
   const [errorMessage, setErrorMessage] = useState<string>();
 
-  const onConfirm = async (event: any) => {
+  const onConfirm = async () => {
     if (!stripe || !elements) {
       return;
     }
@@ -56,6 +56,7 @@ export default function StripeCheckout() {
           buttonHeight: 55,
         }}
       />
+      <p className="text-sm text-gray-500">{errorMessage}</p>
     </div>
   );
 }
