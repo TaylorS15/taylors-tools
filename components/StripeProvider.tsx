@@ -4,7 +4,7 @@ import { loadStripe, StripeElementsOptions } from "@stripe/stripe-js";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_API_KEY!);
 
-export default function QueryProvider({
+export default function StripeProvider({
   stripeOptions,
   children,
 }: {

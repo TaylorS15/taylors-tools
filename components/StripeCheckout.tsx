@@ -30,7 +30,7 @@ export default function StripeCheckout() {
       elements,
       clientSecret,
       confirmParams: {
-        return_url: "https://example.com/order/123/complete",
+        return_url: "https://example.com/return",
       },
     });
 
@@ -41,10 +41,18 @@ export default function StripeCheckout() {
       // Your customer is redirected to your `return_url`.
     }
   };
+  const onClick = ({ resolve }: { resolve: (value: any) => void }) => {
+    const options = {
+      emailRequired: true,
+    };
+    resolve(options);
+  };
+
   return (
-    <div id="checkout-page" className="flex h-12 w-full gap-4 bg-green-50">
+    <div className="flex h-12 w-full gap-4 bg-zinc-200">
       <ExpressCheckoutElement
         onConfirm={onConfirm}
+        onClick={onClick}
         options={{
           buttonType: {
             googlePay: "checkout",
