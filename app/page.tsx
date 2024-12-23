@@ -1,5 +1,5 @@
-import ToolCard from "@/components/ToolCard";
-import RequestForm from "@/components/RequestForm";
+import ToolCard from "@/components/app/tool-card";
+import RequestForm from "@/components/request-form";
 import { getTools } from "@/app/queries";
 
 export default async function Home() {
@@ -10,7 +10,7 @@ export default async function Home() {
       <div className="grid grid-flow-row grid-cols-1 gap-4 sm:justify-items-center sm:gap-8 md:grid-cols-2 lg:grid-cols-3">
         <div className="flex h-72 flex-col items-center justify-center text-zinc-900 sm:h-80 md:col-start-1 md:row-span-1 md:row-start-1 lg:col-span-2 lg:col-start-2 lg:row-start-1 xl:col-start-2 xl:row-start-1">
           <p className="text-xl font-semibold  lg:text-2xl">Welcome to</p>
-          <h1 className="bg-gradient-to-br from-blue-500 from-10% via-cyan-500 to-blue-500 to-90% bg-clip-text text-center text-6xl font-bold text-transparent drop-shadow-md  sm:text-7xl lg:text-8xl">
+          <h1 className="bg-gradient-to-br from-blue-700 from-10% via-cyan-400 to-blue-700 to-90% bg-clip-text text-center text-6xl font-bold text-transparent drop-shadow-md  sm:text-7xl lg:text-8xl">
             Taylors Tools
           </h1>
           <h2 className="mt-2 max-w-lg text-center text-2xl font-medium  lg:text-3xl">

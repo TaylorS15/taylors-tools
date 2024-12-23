@@ -21,6 +21,20 @@ export const getTools: () => Promise<z.infer<typeof toolSchema>[]> = cache(
       }
     },
     ["tools"],
-    { revalidate: 3600, tags: ["posts"] },
+    { revalidate: 3600, tags: ["tools"] },
   ),
 );
+
+export const getToolData = async (toolName: string) => {
+  try {
+    const response = await turso.execute({
+      sql: "SELECT * FROM tools WHERE url = ?",
+      args: [toolName],
+    });
+    const validatedTool = toolSchema.parse(response.rows[0]);
+    return validatedTool;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+};

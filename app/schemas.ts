@@ -10,5 +10,5 @@ export const toolSchema = z.object({
   pricing_single: z.number(),
   pricing_credits: z.number(),
   cta: z.string().min(1).max(255),
+  stripe_price_id: z.string().min(1).max(255).nullish(),
 });
-

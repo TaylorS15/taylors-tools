@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
-import Navigation from "@/components/Navigation";
+import Navigation from "@/components/navigation";
 import { ClerkProvider } from "@clerk/nextjs";
 import { GeistSans } from "geist/font/sans";
-import QueryProvider from "@/components/QueryProvider";
-import Footer from "@/components/Footer";
-import "@uploadthing/react/styles.css";
+import QueryProvider from "@/components/query-provider";
+import Footer from "@/components/footer";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -23,7 +22,7 @@ export default async function RootLayout({
         <html className={`${GeistSans.variable} antialiased`} lang="en">
           <body>
             <Navigation />
-            <div className="min-h-[calc(100dvh-4rem)] px-4 pb-24 pt-28 md:px-[10vw]">
+            <div className="min-h-[calc(100dvh-4rem)] px-4 pb-6 pt-20 md:px-[10vw]">
               {children}
             </div>
             <Footer />

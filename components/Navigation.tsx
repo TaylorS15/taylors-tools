@@ -10,11 +10,12 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
-import { SignInButton } from "@clerk/nextjs";
 import { getTools } from "@/app/queries";
+import NavigationAuthButton from "@/components/navigation-auth-button";
 
 export default async function Navigation() {
   const tools = await getTools();
+
   return (
     <div className="fixed z-50 flex h-14 w-full items-center px-3 shadow-md backdrop-blur-lg md:px-[10vw]">
       <NavigationMenu>
@@ -36,11 +37,11 @@ export default async function Navigation() {
               Tools
             </NavigationMenuTrigger>
             <NavigationMenuContent>
-              <ul className="grid max-h-96 w-[400px] gap-3 overflow-y-scroll p-4 md:max-h-max md:w-[500px] md:grid-cols-2 md:overflow-y-clip lg:w-[600px]">
+              <ul className="grid max-h-96 w-[400px] gap-3 overflow-y-scroll p-2 md:max-h-max md:w-[500px] md:grid-cols-2 md:overflow-y-clip lg:w-[600px]">
                 {tools.map((tool) => (
                   <ListItem
                     key={tool.name}
-                    href={`tool/${tool.url}`}
+                    href={`../tool/${tool.url}`}
                     title={tool.name}
                   >
                     {tool.description}
@@ -50,16 +51,7 @@ export default async function Navigation() {
             </NavigationMenuContent>
           </NavigationMenuItem>
           <NavigationMenuItem>
-            <SignInButton>
-              <button
-                className={cn(
-                  navigationMenuTriggerStyle(),
-                  "bg-white/0 text-base  hover:text-blue-500",
-                )}
-              >
-                Login
-              </button>
-            </SignInButton>
+            <NavigationAuthButton />
           </NavigationMenuItem>
         </NavigationMenuList>
       </NavigationMenu>

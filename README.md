@@ -13,4 +13,5 @@
 - Lie about usage
 - Give people usage id if not signed in, put in url, and tell people not to leave page 
 - AI generated transcripts with summaries and timestamps
+    - youtube link ability
 - File compression
