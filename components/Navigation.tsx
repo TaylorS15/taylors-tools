@@ -10,7 +10,7 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
-import { getTools } from "@/app/queries";
+import { getTools } from "@/lib/server";
 import NavigationAuthButton from "@/components/navigation-auth-button";
 
 export default async function Navigation() {

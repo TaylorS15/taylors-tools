@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { PDFDocument } from "pdf-lib";
 import sharp from "sharp";
-import { updateFulfilledSession, verifyStripePayment } from "@/app/api";
-import { s3Client, S3FileHandler } from "@/lib/s3";
+import {
+  storeUserOperation,
+  updateFulfilledSession,
+  verifyStripePayment,
+} from "@/lib/server";
+import { uploadFile } from "@/lib/s3";
 import { auth } from "@clerk/nextjs/server";
 
 const SUPPORTED_MIME_TYPES = new Set([
@@ -123,32 +127,30 @@ export async function POST(req: Request) {
     }
 
     const { userId } = await auth();
-    console.log(userId);
     if (userId) {
-      const uploadResult = await S3FileHandler.uploadFile(
-        Buffer.from(pdfBuffer),
-        {
-          userId: userId!,
-          tool: "img-to-pdf",
-          originalName: title ? title : updateSessionResult.uniqueMetadataId,
-          contentType: "application/pdf",
-          isTemporary: !saveToProfile,
-        },
-      );
+      await uploadFile(Buffer.from(pdfBuffer), {
+        userId: userId!,
+        tool: "img-to-pdf",
+        originalName: title ? title : updateSessionResult.uniqueMetadataId,
+        contentType: "application/pdf",
+        isTemporary: !saveToProfile,
+      });
 
-      console.log(uploadResult);
+      if (saveToProfile) {
+        await storeUserOperation(
+          userId,
+          title ? title : updateSessionResult.uniqueMetadataId,
+          "img-to-pdf",
+          new Date().toISOString(),
+        );
+      }
     } else {
-      const uploadResult = await S3FileHandler.uploadFile(
-        Buffer.from(pdfBuffer),
-        {
-          tool: "img-to-pdf",
-          originalName: title ? title : updateSessionResult.uniqueMetadataId,
-          contentType: "application/pdf",
-          isTemporary: true,
-        },
-      );
-
-      console.log(uploadResult);
+      await uploadFile(Buffer.from(pdfBuffer), {
+        tool: "img-to-pdf",
+        originalName: title ? title : updateSessionResult.uniqueMetadataId,
+        contentType: "application/pdf",
+        isTemporary: true,
+      });
     }
 
     return new NextResponse(pdfBuffer, {

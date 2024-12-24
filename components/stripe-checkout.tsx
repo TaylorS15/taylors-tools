@@ -5,8 +5,6 @@ import {
 } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import { useCallback, useEffect, useState } from "react";
-import { useCheckout } from "@/components/checkout-provider";
-import Stripe from "stripe";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_API_KEY!);
 
@@ -17,9 +15,6 @@ export default function StripeCheckout({
   stripePriceId: string;
   onPaymentSuccess: (clientSecret: string) => void;
 }) {
-  // const { stripePriceId, setShowStripeCheckout, onPaymentSuccess } =
-  //   useCheckout();
-
   const [clientSecret, setClientSecret] = useState("");
   const [hasCompleted, setHasCompleted] = useState(false);
 
@@ -50,7 +45,6 @@ export default function StripeCheckout({
 
   useEffect(() => {
     if (hasCompleted) {
-      // setShowStripeCheckout(false);
       if (clientSecret) {
         onPaymentSuccess(clientSecret);
         setClientSecret("");

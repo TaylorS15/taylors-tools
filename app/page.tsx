@@ -1,6 +1,6 @@
 import ToolCard from "@/components/app/tool-card";
 import RequestForm from "@/components/request-form";
-import { getTools } from "@/app/queries";
+import { getTools } from "@/lib/server";
 
 export default async function Home() {
   const tools = await getTools();

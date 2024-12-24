@@ -10,7 +10,7 @@ import {
 } from "react";
 import { ArrowLeft, LoaderCircle, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { getToolData } from "@/app/queries";
+import { getToolData } from "@/lib/server";
 import { usePreventUnload } from "@/hooks/use-prevent-unload";
 import { useUser } from "@clerk/nextjs";
 import { useToast } from "@/hooks/use-toast";

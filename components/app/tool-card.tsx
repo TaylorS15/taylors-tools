@@ -1,7 +1,7 @@
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { z } from "zod";
-import { toolSchema } from "@/app/schemas";
+import { toolSchema } from "@/lib/schemas";
 import Image from "next/image";
 
 export default function ToolCard(props: z.infer<typeof toolSchema>) {

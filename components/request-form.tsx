@@ -44,8 +44,6 @@ export default function RequestForm() {
     }
   };
 
-  
-
   if (!successfulRequest) {
     return (
       <form onSubmit={handleSubmit(onSubmit)} className="flex gap-4">
