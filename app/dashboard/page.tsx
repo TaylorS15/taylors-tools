@@ -13,6 +13,21 @@ export default function Dashboard() {
   const [selectedTool, setSelectedTool] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const toolsQuery = useQuery({
+    queryKey: ["tools"],
+    queryFn: async () => await getTools(),
+    staleTime: 60 * 60 * 1000,
+  });
+  const tools = toolsQuery.data ?? [];
+
+  const operationsQuery = useQuery({
+    queryKey: ["operations", selectedTool, user?.id],
+    queryFn: async () =>
+      await getUserToolOperations(user?.id ?? "", selectedTool),
+    staleTime: 60 * 60 * 1000,
+  });
+  const operations = operationsQuery.data ?? [];
+
   if (!user) {
     return (
       <main className="flex w-full flex-col items-center md:flex-row md:items-start">
@@ -28,20 +43,6 @@ export default function Dashboard() {
       </main>
     );
   }
-
-  const toolsQuery = useQuery({
-    queryKey: ["tools"],
-    queryFn: async () => await getTools(),
-    staleTime: 60 * 60 * 1000,
-  });
-  const tools = toolsQuery.data ?? [];
-
-  const operationsQuery = useQuery({
-    queryKey: ["operations", selectedTool, user?.id],
-    queryFn: async () => await getUserToolOperations(user?.id, selectedTool),
-    staleTime: 60 * 60 * 1000,
-  });
-  const operations = operationsQuery.data ?? [];
 
   return (
     <main className="flex w-full flex-col items-center gap-4 md:flex-row md:items-start">
