@@ -1,4 +1,4 @@
-import { ToolRequestTemplate } from "@/components/templates/ToolRequest";
+import { ToolRequestTemplate } from "@/components/templates/tool-request";
 import { Resend } from "resend";
 import { z } from "zod";
 
