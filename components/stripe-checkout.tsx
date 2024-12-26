@@ -53,7 +53,7 @@ export default function StripeCheckout({
   }, [hasCompleted]);
 
   return (
-    <div className="w-full max-w-lg rounded-lg">
+    <div className="mx-auto w-full max-w-lg overflow-y-scroll">
       <EmbeddedCheckoutProvider stripe={stripePromise} options={options}>
         <EmbeddedCheckout />
       </EmbeddedCheckoutProvider>

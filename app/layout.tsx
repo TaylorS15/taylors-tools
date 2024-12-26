@@ -20,9 +20,9 @@ export default async function RootLayout({
     <ClerkProvider>
       <QueryProvider>
         <html className={`${GeistSans.variable} antialiased`} lang="en">
-          <body>
+          <body className="">
             <Navigation />
-            <div className="min-h-[calc(100dvh-4rem)] px-4 pb-6 pt-20 md:px-[10vw]">
+            <div className="mx-auto min-h-[calc(100dvh-4rem)] max-w-[112rem] px-4 pb-6 pt-24 md:px-[10vw]">
               {children}
             </div>
             <Footer />

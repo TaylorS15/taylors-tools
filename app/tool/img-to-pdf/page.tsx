@@ -37,6 +37,9 @@ export default function ImagesToPdf() {
   const [checkoutState, setCheckoutState] = useState<
     "INPUT" | "CHECKOUT" | "LOADING" | "SUCCESS"
   >("INPUT");
+  const [selectedImageFit, setSelectedImageFit] = useState<
+    "FIT" | "STRETCH" | "FILL"
+  >("FIT");
   const [initialLoad, setInitialLoad] = useState(true);
 
   usePreventUnload({
@@ -47,7 +50,14 @@ export default function ImagesToPdf() {
 
   const toolQuery = useQuery({
     queryKey: ["tool", "img-to-pdf"],
-    queryFn: async () => getToolData("img-to-pdf"),
+    queryFn: async () => {
+      const response = await getToolData("img-to-pdf");
+      if (!response.success) {
+        throw new Error(response.error);
+      }
+
+      return response.result;
+    },
   });
 
   const allowedTypes = useMemo(
@@ -156,6 +166,7 @@ export default function ImagesToPdf() {
       images: encodedImages,
       saveToProfile,
       title,
+      selectedImageFit,
     };
 
     const response = await fetch("/api/tool/img-to-pdf", {
@@ -252,10 +263,6 @@ export default function ImagesToPdf() {
       </div>
 
       <div className="flex h-max w-full max-w-xl flex-col gap-6 overflow-x-clip p-4 md:h-[calc(100dvh-14rem)] md:w-3/5 md:max-w-none">
-        <h1 className="text-center text-xl font-semibold text-blue-600">
-          Image(s) to PDF
-        </h1>
-
         <AnimatePresence mode="wait">
           {checkoutState === "INPUT" && (
             <motion.div
@@ -264,8 +271,11 @@ export default function ImagesToPdf() {
               initial={initialLoad ? "center" : "enter"}
               animate="center"
               exit="exit"
-              className="mt-auto flex flex-col gap-4"
+              className="mt-auto flex h-full flex-col gap-4"
             >
+              <h1 className="mb-auto text-center text-xl font-semibold text-blue-600">
+                Image(s) to PDF
+              </h1>
               <input
                 type="text"
                 className="w-full rounded-lg border border-zinc-200 p-2 text-sm focus:outline-none active:outline-none"
@@ -273,6 +283,29 @@ export default function ImagesToPdf() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
               />
+              <div className="flex w-full items-center justify-between rounded-lg border border-zinc-200 p-2 text-sm text-zinc-700">
+                <p>Image fit</p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setSelectedImageFit("FIT")}
+                    className={`${selectedImageFit === "FIT" ? "bg-blue-600 text-white" : "bg-zinc-50 text-zinc-700"} flex w-20 items-center justify-center rounded-lg border border-zinc-200 text-sm transition`}
+                  >
+                    <p className="text-sm font-medium">Fit</p>
+                  </button>
+                  <button
+                    onClick={() => setSelectedImageFit("STRETCH")}
+                    className={`${selectedImageFit === "STRETCH" ? "bg-blue-600 text-white" : "bg-zinc-50 text-zinc-700"} flex w-20 items-center justify-center rounded-lg border border-zinc-200 text-sm transition`}
+                  >
+                    <p className="text-sm font-medium">Stretch</p>
+                  </button>
+                  <button
+                    onClick={() => setSelectedImageFit("FILL")}
+                    className={`${selectedImageFit === "FILL" ? "bg-blue-600 text-white" : "bg-zinc-50 text-zinc-700"} flex w-20 items-center justify-center rounded-lg border border-zinc-200 text-sm transition`}
+                  >
+                    <p className="text-sm font-medium">Fill</p>
+                  </button>
+                </div>
+              </div>
               <div
                 className={`${!user ? "cursor-not-allowed text-zinc-400" : "text-zinc-700"} flex w-full items-center justify-between rounded-lg border border-zinc-200 p-2 text-sm`}
               >

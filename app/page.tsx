@@ -19,9 +19,8 @@ export default async function Home() {
           </h2>
         </div>
 
-        {tools.map((tool) => (
-          <ToolCard key={tool.name} {...tool} />
-        ))}
+        {tools.success &&
+          tools.result.map((tool) => <ToolCard key={tool.name} {...tool} />)}
       </div>
 
       <div className="flex w-full flex-col justify-center gap-6">
@@ -51,19 +50,20 @@ export default async function Home() {
             </p>
           </div>
 
-          {tools.map((tool) => {
-            return (
-              <div key={tool.name} className="flex w-full gap-8 border-b p-2">
-                <p className="w-max flex-1">{tool.name}</p>
-                <p className="w-16 text-center text-zinc-600 md:w-28">
-                  ${tool.pricing_single / 100}
-                </p>
-                <p className="w-16 text-center text-zinc-600 md:w-44">
-                  {tool.pricing_credits}
-                </p>
-              </div>
-            );
-          })}
+          {tools.success &&
+            tools.result.map((tool) => {
+              return (
+                <div key={tool.name} className="flex w-full gap-8 border-b p-2">
+                  <p className="w-max flex-1">{tool.name}</p>
+                  <p className="w-16 text-center text-zinc-600 md:w-28">
+                    ${tool.pricing_single / 100}
+                  </p>
+                  <p className="w-16 text-center text-zinc-600 md:w-44">
+                    {tool.pricing_credits}
+                  </p>
+                </div>
+              );
+            })}
         </div>
       </div>
       <div className="flex w-full flex-col justify-center gap-6">

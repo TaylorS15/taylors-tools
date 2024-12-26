@@ -15,3 +15,4 @@
 - AI generated transcripts with summaries and timestamps
     - youtube link ability
 - File compression
+- Thin wrapper over llms

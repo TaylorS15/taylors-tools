@@ -6,7 +6,7 @@ import {
   updateFulfilledSession,
   verifyStripePayment,
 } from "@/lib/server";
-import { uploadFile } from "@/lib/s3";
+import { uploadS3File } from "@/lib/s3";
 import { auth } from "@clerk/nextjs/server";
 
 const SUPPORTED_MIME_TYPES = new Set([
@@ -16,7 +16,10 @@ const SUPPORTED_MIME_TYPES = new Set([
   "image/webp",
 ]);
 
-async function generatePdf(base64Images: string[]): Promise<Uint8Array> {
+async function generatePdf(
+  base64Images: string[],
+  imageOptions: "FIT" | "STRETCH" | "FILL",
+) {
   if (!base64Images || !Array.isArray(base64Images)) {
     throw new Error("No images provided");
   }
@@ -36,46 +39,69 @@ async function generatePdf(base64Images: string[]): Promise<Uint8Array> {
       if (!regexMatch) {
         throw new Error(`Invalid base64 image data for image ${i + 1}`);
       }
-
       const mimeType = regexMatch[1].toLowerCase() ?? null;
       if (!mimeType || !SUPPORTED_MIME_TYPES.has(mimeType)) {
         throw new Error(
           `Unsupported image format for image ${i + 1}: ${mimeType}. Supported formats are: JPEG, JPG, PNG, and WebP`,
         );
       }
-
       const base64Data = base64Images[i].split(";base64,").pop();
       if (!base64Data) {
         throw new Error(`Invalid base64 image data for image ${i + 1}`);
       }
 
       const imageBuffer = Buffer.from(base64Data, "base64");
-
       const jpgBuffer = await sharp(imageBuffer)
         .jpeg({
           quality: 100,
-          chromaSubsampling: "4:4:4",
+          chromaSubsampling: "4:2:0",
         })
         .toBuffer();
 
       const image = await pdfDoc.embedJpg(jpgBuffer);
       const page = pdfDoc.addPage();
       const { width, height } = page.getSize();
-
       const imageAspectRatio = image.width / image.height;
       const pageAspectRatio = width / height;
 
-      let drawWidth = width;
-      let drawHeight = height;
+      let drawWidth: number;
+      let drawHeight: number;
+      let x: number;
+      let y: number;
 
-      if (imageAspectRatio > pageAspectRatio) {
-        drawHeight = width / imageAspectRatio;
-      } else {
-        drawWidth = height * imageAspectRatio;
+      switch (imageOptions) {
+        case "STRETCH":
+          drawWidth = width;
+          drawHeight = height;
+          x = 0;
+          y = 0;
+          break;
+
+        case "FILL":
+          if (imageAspectRatio > pageAspectRatio) {
+            drawHeight = height;
+            drawWidth = height * imageAspectRatio;
+          } else {
+            drawWidth = width;
+            drawHeight = width / imageAspectRatio;
+          }
+          x = (width - drawWidth) / 2;
+          y = (height - drawHeight) / 2;
+          break;
+
+        case "FIT":
+        default:
+          if (imageAspectRatio > pageAspectRatio) {
+            drawWidth = width;
+            drawHeight = width / imageAspectRatio;
+          } else {
+            drawHeight = height;
+            drawWidth = height * imageAspectRatio;
+          }
+          x = (width - drawWidth) / 2;
+          y = (height - drawHeight) / 2;
+          break;
       }
-
-      const x = (width - drawWidth) / 2;
-      const y = (height - drawHeight) / 2;
 
       page.drawImage(image, {
         x,
@@ -95,13 +121,18 @@ async function generatePdf(base64Images: string[]): Promise<Uint8Array> {
 
 export async function POST(req: Request) {
   try {
-    const { clientSecret, images, saveToProfile, title } = await req.json();
+    const { clientSecret, images, saveToProfile, title, selectedImageFit } =
+      await req.json();
 
     if (!images || !Array.isArray(images)) {
       return NextResponse.json(
         { error: "No images provided" },
         { status: 400 },
       );
+    }
+
+    if (!clientSecret || !selectedImageFit) {
+      return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
 
     const verificationResult = await verifyStripePayment(clientSecret);
@@ -114,7 +145,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const pdfBuffer = await generatePdf(images);
+    const pdfBuffer = await generatePdf(images, selectedImageFit);
 
     const updateSessionResult = await updateFulfilledSession(clientSecret);
     if (!updateSessionResult.success) {
@@ -126,12 +157,15 @@ export async function POST(req: Request) {
       );
     }
 
+    const uniqueMetadataId = updateSessionResult.result;
+
+    let s3Result: string;
     const { userId } = await auth();
     if (userId) {
-      await uploadFile(Buffer.from(pdfBuffer), {
+      s3Result = await uploadS3File(Buffer.from(pdfBuffer), {
         userId: userId!,
         tool: "img-to-pdf",
-        originalName: title ? title : updateSessionResult.uniqueMetadataId,
+        originalName: title ? title : updateSessionResult.result,
         contentType: "application/pdf",
         isTemporary: !saveToProfile,
       });
@@ -139,15 +173,15 @@ export async function POST(req: Request) {
       if (saveToProfile) {
         await storeUserOperation(
           userId,
-          title ? title : updateSessionResult.uniqueMetadataId,
+          title ? title : uniqueMetadataId,
           "img-to-pdf",
           new Date().toISOString(),
         );
       }
     } else {
-      await uploadFile(Buffer.from(pdfBuffer), {
+      s3Result = await uploadS3File(Buffer.from(pdfBuffer), {
         tool: "img-to-pdf",
-        originalName: title ? title : updateSessionResult.uniqueMetadataId,
+        originalName: title ? title : uniqueMetadataId,
         contentType: "application/pdf",
         isTemporary: true,
       });
@@ -157,7 +191,7 @@ export async function POST(req: Request) {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${title ? title : updateSessionResult.uniqueMetadataId}.pdf"`,
+        "Content-Disposition": `attachment; filename="${title ? title : uniqueMetadataId}.pdf"`,
       },
     });
   } catch (error) {

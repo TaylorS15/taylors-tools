@@ -13,11 +13,11 @@ export default function ToolCard(props: z.infer<typeof toolSchema>) {
         <p className="h-14 w-max rounded-md bg-zinc-100 p-2 font-medium">
           {props.name}
         </p>
-        <div className="flex w-full items-center justify-between gap-4">
+        <div className="flex w-full items-center gap-4">
           <Image alt="tool logo" src={props.logo} width={64} height={64} />
-          <p className="text-lg">{props.title}</p>
+          <p className="text-lg font-medium">{props.title}</p>
         </div>
-        <p className="h-full w-full">{props.description}</p>
+        <p className="h-full w-full max-w-96">{props.description}</p>
         <Link
           href={`/tool/${props.url}`}
           className="mt-auto w-full font-medium text-purple-600 transition-all hover:text-black hover:underline group-hover:scale-100 group-hover:opacity-100 md:scale-95 md:opacity-0"

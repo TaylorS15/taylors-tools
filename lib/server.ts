@@ -6,11 +6,24 @@ import { toolSchema, userOperationsSchema } from "@/lib/schemas";
 import { cache } from "react";
 import { unstable_cache } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
-import { getSignedDownloadUrl } from "@/lib/s3";
+import { deleteS3File, getSignedS3DownloadUrl } from "@/lib/s3";
+import { ResultSet } from "@libsql/client/web";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
-export async function verifyStripePayment(clientSecret: string) {
+export type ApiResponse<T> =
+  | {
+      success: true;
+      result: T;
+    }
+  | {
+      success: false;
+      error: string;
+    };
+
+export async function verifyStripePayment(
+  clientSecret: string,
+): Promise<ApiResponse<void>> {
   try {
     const session = await stripe.checkout.sessions.retrieve(
       clientSecret.split("_secret_")[0],
@@ -27,9 +40,8 @@ export async function verifyStripePayment(clientSecret: string) {
       };
     }
 
-    return { success: true };
+    return { success: true, result: undefined };
   } catch (error) {
-    console.error("Error verifying payment:", error);
     return {
       success: false,
       error: "Failed to verify payment",
@@ -37,7 +49,9 @@ export async function verifyStripePayment(clientSecret: string) {
   }
 }
 
-export async function updateFulfilledSession(clientSecret: string) {
+export async function updateFulfilledSession(
+  clientSecret: string,
+): Promise<ApiResponse<string>> {
   const uniqueMetadataId = crypto.randomUUID();
 
   try {
@@ -50,10 +64,9 @@ export async function updateFulfilledSession(clientSecret: string) {
 
     return {
       success: true,
-      uniqueMetadataId,
+      result: uniqueMetadataId,
     };
   } catch (error) {
-    console.error("Error updating session:", error);
     return {
       success: false,
       error: "Failed to update session",
@@ -66,16 +79,18 @@ export async function storeUserOperation(
   name: string,
   tool: string,
   createdAt: string,
-) {
+): Promise<ApiResponse<ResultSet>> {
   try {
-    const result = turso.execute({
+    const result = await turso.execute({
       sql: "INSERT INTO user_operations (user_id, name, tool, created_at) VALUES (?, ?, ?, ?)",
       args: [userId, name, tool, createdAt],
     });
 
-    return result;
+    return {
+      success: true,
+      result: result,
+    };
   } catch (error) {
-    console.error("Error storing user operation:", error);
     return {
       success: false,
       error: "Failed to store user operation",
@@ -83,19 +98,26 @@ export async function storeUserOperation(
   }
 }
 
-export const getTools: () => Promise<z.infer<typeof toolSchema>[]> = cache(
+export const getTools: () => Promise<
+  ApiResponse<z.infer<typeof toolSchema>[]>
+> = cache(
   unstable_cache(
     async () => {
       try {
         const response = await turso.execute("SELECT * FROM tools");
-        console.log(Date.now(), "getTools");
         const validatedTools = response.rows.map((row) =>
           toolSchema.parse(row),
         );
-        return validatedTools;
+
+        return {
+          success: true,
+          result: validatedTools,
+        };
       } catch (error) {
-        console.error(error);
-        return [];
+        return {
+          success: false,
+          error: "Failed to get tools",
+        };
       }
     },
     ["tools"],
@@ -103,21 +125,33 @@ export const getTools: () => Promise<z.infer<typeof toolSchema>[]> = cache(
   ),
 );
 
-export const getToolData = async (toolName: string) => {
+export async function getToolData(
+  toolName: string,
+): Promise<ApiResponse<z.infer<typeof toolSchema>>> {
   try {
     const response = await turso.execute({
       sql: "SELECT * FROM tools WHERE url = ?",
       args: [toolName],
     });
-    const validatedTool = toolSchema.parse(response.rows[0]);
-    return validatedTool;
-  } catch (error) {
-    console.error(error);
-    return null;
-  }
-};
 
-export const getUserToolOperations = async (userId: string, tool: string) => {
+    const validatedTool = toolSchema.parse(response.rows[0]);
+
+    return {
+      success: true,
+      result: validatedTool,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: "Failed to get tool data",
+    };
+  }
+}
+
+export async function getUserToolOperations(
+  userId: string,
+  tool: string,
+): Promise<ApiResponse<z.infer<typeof userOperationsSchema>[]>> {
   try {
     const response = await turso.execute({
       sql: "SELECT * FROM user_operations WHERE user_id = ? AND tool = ?",
@@ -127,24 +161,63 @@ export const getUserToolOperations = async (userId: string, tool: string) => {
       userOperationsSchema.parse(row),
     );
 
-    return validatedOperations;
+    return {
+      success: true,
+      result: validatedOperations,
+    };
   } catch (error) {
-    console.error(error);
-    return null;
+    return {
+      success: false,
+      error: "Failed to get user operations",
+    };
   }
-};
+}
 
-export async function fetchFileUrl(name: string, tool: string) {
+export async function getS3FileUrl(
+  name: string,
+  tool: string,
+): Promise<ApiResponse<string>> {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return null;
+      return { success: false, error: "Unauthorized" };
     }
 
-    const result = await getSignedDownloadUrl(`${tool}/${userId}/${name}`);
-    return result;
+    const result = await getSignedS3DownloadUrl(`${tool}/${userId}/${name}`);
+
+    return { success: true, result: result };
   } catch (error) {
-    console.error("Error fetching file URL:", error);
-    return null;
+    return {
+      success: false,
+      error: "Failed to get file URL",
+    };
+  }
+}
+
+export async function deleteFile(
+  name: string,
+  tool: string,
+): Promise<ApiResponse<void>> {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    await deleteS3File(`${tool}/${userId}/${name}`);
+    await turso.execute({
+      sql: "DELETE FROM user_operations WHERE name = ? AND tool = ?",
+      args: [name, tool],
+    });
+
+    return {
+      success: true,
+      result: undefined,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: "Failed to delete file",
+    };
   }
 }

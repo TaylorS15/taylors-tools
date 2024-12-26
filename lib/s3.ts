@@ -17,7 +17,7 @@ const s3Client = new S3Client({
 });
 const BUCKET_NAME = process.env.AWS_BUCKET_NAME!;
 
-interface UploadResponse {
+export interface UploadResponse {
   key: string;
   url: string;
   expiresAt?: Date;
@@ -35,7 +35,7 @@ interface KeyGenerationParams {
   isTemporary?: boolean;
 }
 
-export async function generateKey(
+export async function generateS3Key(
   fileName: string,
   metadata: KeyGenerationParams,
 ): Promise<string> {
@@ -52,18 +52,15 @@ export async function generateKey(
   return `${metadata.tool}/${metadata.userId}/${sanitizedFileName}`;
 }
 
-export async function uploadFile(
+export async function uploadS3File(
   file: Buffer,
   metadata: FileMetadata,
-): Promise<UploadResponse> {
-  const key = await generateKey(metadata.originalName, {
+): Promise<string> {
+  const key = await generateS3Key(metadata.originalName, {
     userId: metadata.userId,
     tool: metadata.tool,
     isTemporary: metadata.isTemporary,
   });
-
-  const expiresIn = 30 * 60 * 1000; // 30 minutes
-  const expiresAt = new Date(Date.now() + expiresIn);
 
   const command = new PutObjectCommand({
     Bucket: BUCKET_NAME,
@@ -72,17 +69,17 @@ export async function uploadFile(
     ContentType: metadata.contentType,
   });
 
-  await s3Client.send(command);
-  const url = await getSignedDownloadUrl(key);
+  try {
+    await s3Client.send(command);
+  } catch (error) {
+    throw new Error("Failed to upload file");
+  }
+  const url = await getSignedS3DownloadUrl(key);
 
-  return {
-    key,
-    url,
-    expiresAt,
-  };
+  return url;
 }
 
-export async function getSignedDownloadUrl(
+export async function getSignedS3DownloadUrl(
   key: string,
   expiresIn = 3600,
 ): Promise<string> {
@@ -94,7 +91,7 @@ export async function getSignedDownloadUrl(
   return getSignedUrl(s3Client, command, { expiresIn });
 }
 
-export async function listUserFiles(
+export async function listUserS3Files(
   userId: string,
   tool: string,
 ): Promise<string[]> {
@@ -107,7 +104,7 @@ export async function listUserFiles(
   return response.Contents?.map((file) => file.Key!) || [];
 }
 
-export async function deleteFile(key: string): Promise<void> {
+export async function deleteS3File(key: string): Promise<void> {
   const command = new DeleteObjectCommand({
     Bucket: BUCKET_NAME,
     Key: key,
