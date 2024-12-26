@@ -159,33 +159,23 @@ export async function POST(req: Request) {
 
     const uniqueMetadataId = updateSessionResult.result;
 
-    let s3Result: string;
     const { userId } = await auth();
-    if (userId) {
-      s3Result = await uploadS3File(Buffer.from(pdfBuffer), {
-        userId: userId!,
-        tool: "img-to-pdf",
-        originalName: title ? title : updateSessionResult.result,
-        contentType: "application/pdf",
-        isTemporary: !saveToProfile,
-      });
-
-      if (saveToProfile) {
-        await storeUserOperation(
-          userId,
-          title ? title : uniqueMetadataId,
-          "img-to-pdf",
-          new Date().toISOString(),
-        );
-      }
-    } else {
-      s3Result = await uploadS3File(Buffer.from(pdfBuffer), {
-        tool: "img-to-pdf",
-        originalName: title ? title : uniqueMetadataId,
-        contentType: "application/pdf",
-        isTemporary: true,
-      });
+    if (userId && saveToProfile) {
+      await storeUserOperation(
+        userId,
+        title ? title : uniqueMetadataId,
+        "img-to-pdf",
+        new Date().toISOString(),
+      );
     }
+
+    await uploadS3File(Buffer.from(pdfBuffer), {
+      userId: userId ?? undefined,
+      tool: "img-to-pdf",
+      originalName: title ? title : uniqueMetadataId,
+      contentType: "application/pdf",
+      isTemporary: true,
+    });
 
     return new NextResponse(pdfBuffer, {
       status: 200,

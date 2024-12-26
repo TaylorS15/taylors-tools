@@ -72,6 +72,7 @@ export async function uploadS3File(
   try {
     await s3Client.send(command);
   } catch (error) {
+    console.error(error);
     throw new Error("Failed to upload file");
   }
   const url = await getSignedS3DownloadUrl(key);

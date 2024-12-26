@@ -42,6 +42,7 @@ export async function verifyStripePayment(
 
     return { success: true, result: undefined };
   } catch (error) {
+    console.error(error);
     return {
       success: false,
       error: "Failed to verify payment",
@@ -67,6 +68,7 @@ export async function updateFulfilledSession(
       result: uniqueMetadataId,
     };
   } catch (error) {
+    console.error(error);
     return {
       success: false,
       error: "Failed to update session",
@@ -91,6 +93,7 @@ export async function storeUserOperation(
       result: result,
     };
   } catch (error) {
+    console.error(error);
     return {
       success: false,
       error: "Failed to store user operation",
@@ -114,6 +117,7 @@ export const getTools: () => Promise<
           result: validatedTools,
         };
       } catch (error) {
+        console.error(error);
         return {
           success: false,
           error: "Failed to get tools",
@@ -141,6 +145,7 @@ export async function getToolData(
       result: validatedTool,
     };
   } catch (error) {
+    console.error(error);
     return {
       success: false,
       error: "Failed to get tool data",
@@ -166,6 +171,7 @@ export async function getUserToolOperations(
       result: validatedOperations,
     };
   } catch (error) {
+    console.error(error);
     return {
       success: false,
       error: "Failed to get user operations",
@@ -187,6 +193,7 @@ export async function getS3FileUrl(
 
     return { success: true, result: result };
   } catch (error) {
+    console.error(error);
     return {
       success: false,
       error: "Failed to get file URL",
@@ -215,6 +222,7 @@ export async function deleteFile(
       result: undefined,
     };
   } catch (error) {
+    console.error(error);
     return {
       success: false,
       error: "Failed to delete file",
