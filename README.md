@@ -16,3 +16,4 @@
     - youtube link ability
 - File compression
 - Thin wrapper over llms
+- Possible move to stripe webhooks instead of calling api route from client

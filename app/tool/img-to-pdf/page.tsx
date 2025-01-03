@@ -8,7 +8,7 @@ import {
   useCallback,
   useMemo,
 } from "react";
-import { ArrowLeft, LoaderCircle, X } from "lucide-react";
+import { ArrowLeft, Copy, LoaderCircle, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getToolData } from "@/lib/server";
 import { usePreventUnload } from "@/hooks/use-prevent-unload";
@@ -20,6 +20,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { AnimatePresence, motion, Variants } from "motion/react";
 import CheckoutButtons from "@/components/checkout-buttons";
 import StripeCheckout from "@/components/stripe-checkout";
+import useFirstMount from "@/hooks/use-first-mount";
+import CreditCheckout from "@/components/credit-checkout";
 
 interface FilePreview {
   id: string;
@@ -29,23 +31,28 @@ interface FilePreview {
 
 export default function ImagesToPdf() {
   const { user } = useUser();
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [previews, setPreviews] = useState<FilePreview[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+
   const [saveToProfile, setSaveToProfile] = useState(true);
   const [title, setTitle] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [checkoutState, setCheckoutState] = useState<
-    "INPUT" | "CHECKOUT" | "LOADING" | "SUCCESS"
-  >("INPUT");
   const [selectedImageFit, setSelectedImageFit] = useState<
     "FIT" | "STRETCH" | "FILL"
   >("FIT");
-  const [initialLoad, setInitialLoad] = useState(true);
+
+  const [checkoutState, setCheckoutState] = useState<
+    "INPUT" | "CREDIT_CHECKOUT" | "STRIPE_CHECKOUT" | "LOADING" | "SUCCESS"
+  >("INPUT");
+  const [downloadLink, setDownloadLink] = useState("");
+  const [downloadCode, setDownloadCode] = useState("");
 
   usePreventUnload({
     enabled: checkoutState === "LOADING" || checkoutState === "SUCCESS",
     message: "Please wait until the conversion is complete before leaving.",
   });
+  const { hasLoaded } = useFirstMount();
   const { toast } = useToast();
 
   const toolQuery = useQuery({
@@ -53,7 +60,13 @@ export default function ImagesToPdf() {
     queryFn: async () => {
       const response = await getToolData("img-to-pdf");
       if (!response.success) {
-        throw new Error(response.error);
+        toast({
+          title: "Error",
+          description: response.error,
+          variant: "destructive",
+        });
+        console.error(response.error);
+        return;
       }
 
       return response.result;
@@ -124,28 +137,6 @@ export default function ImagesToPdf() {
     return `${size.toFixed(1)} ${units[unitIndex]}`;
   }, []);
 
-  useEffect(() => {
-    return () => {
-      previews.forEach((preview) => {
-        URL.revokeObjectURL(preview.previewUrl);
-      });
-    };
-  }, []);
-
-  useEffect(() => {
-    if (user) {
-      setSaveToProfile(true);
-    } else {
-      setSaveToProfile(false);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (initialLoad) {
-      setInitialLoad(false);
-    }
-  }, []);
-
   async function onPaymentSuccess(clientSecret: string) {
     setCheckoutState("LOADING");
     const images = previews.map((preview) => preview.file);
@@ -164,7 +155,7 @@ export default function ImagesToPdf() {
     const payload = {
       clientSecret,
       images: encodedImages,
-      saveToProfile,
+      saveToProfile: user ? saveToProfile : false,
       title,
       selectedImageFit,
     };
@@ -185,29 +176,27 @@ export default function ImagesToPdf() {
         description: error.error,
         variant: "destructive",
       });
-      throw new Error(error.error);
+      console.error(error.error);
+      return;
     }
 
-    const pdfBlob = await response.blob();
-    const pdfUrl = URL.createObjectURL(pdfBlob);
-    const pdfName =
-      response.headers
-        .get("Content-Disposition")
-        ?.split('filename="')[1]
-        .replace('"', "") ?? "default.pdf";
+    const { link, downloadCode } = await response.json();
+    setDownloadLink(link);
+    setDownloadCode(downloadCode);
 
-    const link = document.createElement("a");
-    link.href = pdfUrl;
-    link.download = pdfName;
-    document.body.appendChild(link);
-    link.click();
-
-    document.body.removeChild(link);
-    URL.revokeObjectURL(pdfUrl);
     setPreviews([]);
     setTitle("");
     setCheckoutState("SUCCESS");
   }
+
+  // Likely necessary to prevent memory leaks when leaving the page.
+  useEffect(() => {
+    return () => {
+      previews.forEach((preview) => {
+        URL.revokeObjectURL(preview.previewUrl);
+      });
+    };
+  }, []);
 
   return (
     <main className="flex w-full flex-col-reverse items-center md:flex-row md:items-start">
@@ -268,7 +257,7 @@ export default function ImagesToPdf() {
             <motion.div
               key="input"
               variants={containerVariants}
-              initial={initialLoad ? "center" : "enter"}
+              initial={hasLoaded ? "enter" : "center"}
               animate="center"
               exit="exit"
               className="mt-auto flex h-full flex-col gap-4"
@@ -330,7 +319,7 @@ export default function ImagesToPdf() {
                       ? "border-blue-500 bg-blue-50"
                       : "border-gray-300 hover:border-gray-400"
                   } relative w-full rounded-lg
-            border-2 border-dashed p-8
+            border-2 border-dashed p-4
         transition-colors`}
                   onDragOver={() => {
                     setIsDragging(true);
@@ -359,13 +348,14 @@ export default function ImagesToPdf() {
                     }}
                   />
 
-                  <div className="flex flex-col items-center gap-2">
-                    <p className="text-sm text-gray-600">
+                  <div className="flex flex-col items-center">
+                    <p className="mb-2 text-sm text-gray-600">
                       Drop images here or click to browse
                     </p>
                     <p className="text-xs text-gray-500">
                       Maximum file size: {5}MB
                     </p>
+                    <p className="text-xs text-gray-500">Maximum 20 images</p>
                   </div>
                 </div>
 
@@ -377,7 +367,34 @@ export default function ImagesToPdf() {
             </motion.div>
           )}
 
-          {checkoutState === "CHECKOUT" && (
+          {checkoutState === "CREDIT_CHECKOUT" && (
+            <motion.div
+              key="credit"
+              variants={containerVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              className="flex h-full flex-col gap-4"
+            >
+              <button
+                onClick={() => setCheckoutState("INPUT")}
+                className="flex items-center gap-2 text-blue-600 hover:underline"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back
+              </button>
+              {toolQuery.data ? (
+                <CreditCheckout
+                  tool={toolQuery.data}
+                  onPaymentSuccess={onPaymentSuccess}
+                />
+              ) : (
+                <Skeleton className="h-12 w-full" />
+              )}
+            </motion.div>
+          )}
+
+          {checkoutState === "STRIPE_CHECKOUT" && (
             <motion.div
               key="checkout"
               variants={containerVariants}
@@ -416,7 +433,7 @@ export default function ImagesToPdf() {
                 <p className="max-w-52 text-center text-sm text-zinc-700">
                   Please do not close this window or refresh the page.
                 </p>
-                <LoaderCircle className="h-12 w-12 animate-spin" />
+                <LoaderCircle className="h-12 w-12 animate-spin text-zinc-700" />
               </>
             </motion.div>
           )}
@@ -428,6 +445,7 @@ export default function ImagesToPdf() {
               initial="enter"
               animate="center"
               exit="exit"
+              className="flex h-full flex-col justify-between"
             >
               <button
                 onClick={() => setCheckoutState("INPUT")}
@@ -436,7 +454,49 @@ export default function ImagesToPdf() {
                 <ArrowLeft className="h-4 w-4" />
                 Back
               </button>
-              <p>Success!</p>
+              <div className="my-auto flex w-full flex-col items-center justify-center gap-4">
+                <p className="text-xl font-semibold text-blue-600">Success!</p>
+                <p className="text-center text-sm text-zinc-700">
+                  This link will expire in 1 hour, but you can access it later
+                  by saving your download code or viewing it from your profile
+                  (if signed in).
+                  <br></br>
+                  <br></br> If you aren't signed in, or unselected "Save to
+                  profile", you must save your download code to access the file.
+                  Temporary files are permanently inaccessable after 24 hours.
+                </p>
+                <p className="max-w-52 text-center text-sm text-zinc-700">
+                  <a
+                    href={downloadLink}
+                    rel="noreferrer"
+                    target="_blank"
+                    className="text-lg text-blue-600 hover:underline"
+                  >
+                    Click here to open
+                  </a>
+                </p>
+
+                <div className="flex flex-col items-center gap-2">
+                  <p className="text-xs text-zinc-700">Download code</p>
+                  <div className="flex items-center gap-6 rounded-lg border border-zinc-200 bg-white p-2 text-lg text-zinc-700">
+                    <p className="">{downloadCode}</p>
+                    <Copy
+                      className="h-8 w-8 cursor-pointer rounded-lg p-1 hover:bg-zinc-100"
+                      onClick={() => {
+                        navigator.clipboard.writeText(downloadCode);
+                        toast({
+                          title: "Copied to clipboard!",
+                        });
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <p className="max-w-96 text-center text-sm font-bold text-zinc-700">
+                  Warning: Leaving this page without saving your code can cause
+                  you to lose access to your file.
+                </p>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>

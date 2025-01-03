@@ -7,6 +7,7 @@ import {
   DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { ApiResponse } from "@/lib/server";
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION!,
@@ -38,46 +39,57 @@ interface KeyGenerationParams {
 export async function generateS3Key(
   fileName: string,
   metadata: KeyGenerationParams,
-): Promise<string> {
+): Promise<ApiResponse<string>> {
   const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, "_");
 
   if (metadata.isTemporary) {
-    return `temp/${sanitizedFileName}`;
+    return { success: true, result: `${sanitizedFileName}` };
   }
 
   if (!metadata.userId) {
-    throw new Error("User ID is required");
+    return {
+      success: false,
+      error: "User ID not provided",
+    };
   }
 
-  return `${metadata.tool}/${metadata.userId}/${sanitizedFileName}`;
+  return {
+    success: true,
+    result: `${metadata.tool}/${metadata.userId}/${sanitizedFileName}`,
+  };
 }
 
 export async function uploadS3File(
   file: Buffer,
   metadata: FileMetadata,
-): Promise<string> {
+): Promise<ApiResponse<string>> {
   const key = await generateS3Key(metadata.originalName, {
     userId: metadata.userId,
     tool: metadata.tool,
     isTemporary: metadata.isTemporary,
   });
+  if (!key.success) {
+    return {
+      success: false,
+      error: key.error,
+    };
+  }
 
   const command = new PutObjectCommand({
     Bucket: BUCKET_NAME,
-    Key: key,
+    Key: key.result,
     Body: file,
     ContentType: metadata.contentType,
   });
 
-  try {
-    await s3Client.send(command);
-  } catch (error) {
-    console.error(error);
-    throw new Error("Failed to upload file");
-  }
-  const url = await getSignedS3DownloadUrl(key);
+  await s3Client.send(command);
 
-  return url;
+  const url = await getSignedS3DownloadUrl(key.result);
+
+  return {
+    success: true,
+    result: url,
+  };
 }
 
 export async function getSignedS3DownloadUrl(

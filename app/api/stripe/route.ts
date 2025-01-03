@@ -1,3 +1,4 @@
+import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
@@ -14,6 +15,8 @@ export async function POST(req: Request) {
       );
     }
 
+    const { userId } = await auth();
+
     const session = await stripe.checkout.sessions.create({
       line_items: [
         {
@@ -24,7 +27,13 @@ export async function POST(req: Request) {
       mode: "payment",
       ui_mode: "embedded",
       redirect_on_completion: "never",
+      payment_intent_data: {
+        metadata: {
+          userId: userId ? userId : "",
+        },
+      },
       metadata: {
+        userId: userId ? userId : "",
         fulfilled: "false",
       },
     });

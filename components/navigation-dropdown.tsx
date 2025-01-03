@@ -29,7 +29,7 @@ export default function NavigationDropdown({
       <AnimatePresence>
         {isHovering && (
           <motion.div
-            initial={{ opacity: 0, y: -10, x: "-45%" }}
+            initial={{ opacity: 0, y: -10, x: "-50%" }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.1 }}

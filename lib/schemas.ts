@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const toolSchema = z.object({
+  id: z.number().int().positive(),
   name: z.string().min(1).max(255),
   title: z.string().min(1).max(255),
   url: z.string().min(1).max(255),
@@ -13,14 +14,18 @@ export const toolSchema = z.object({
   stripe_price_id: z.string().min(1).max(255).nullish(),
 });
 
-export const userTotalOperationsSchema = z.object({
+export const userSchema = z.object({
+  id: z.number().int().positive(),
   user_id: z.string().min(1).max(255),
+  credits: z.number(),
   total_operations: z.number(),
 });
 
 export const userOperationsSchema = z.object({
+  id: z.number().int().positive(),
   user_id: z.string().min(1).max(255),
   name: z.string().min(1).max(255),
   tool: z.string().min(1).max(255),
+  download_code: z.string().min(6).max(6),
   created_at: z.string().min(1).max(255),
 });

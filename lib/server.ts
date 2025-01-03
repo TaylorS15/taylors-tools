@@ -2,12 +2,11 @@
 import { turso } from "@/lib/db";
 import Stripe from "stripe";
 import { z } from "zod";
-import { toolSchema, userOperationsSchema } from "@/lib/schemas";
+import { toolSchema, userOperationsSchema, userSchema } from "@/lib/schemas";
 import { cache } from "react";
 import { unstable_cache } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 import { deleteS3File, getSignedS3DownloadUrl } from "@/lib/s3";
-import { ResultSet } from "@libsql/client/web";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -52,9 +51,8 @@ export async function verifyStripePayment(
 
 export async function updateFulfilledSession(
   clientSecret: string,
-): Promise<ApiResponse<string>> {
-  const uniqueMetadataId = crypto.randomUUID();
-
+  uniqueMetadataId: string,
+): Promise<ApiResponse<undefined>> {
   try {
     await stripe.checkout.sessions.update(clientSecret.split("_secret_")[0], {
       metadata: {
@@ -65,13 +63,13 @@ export async function updateFulfilledSession(
 
     return {
       success: true,
-      result: uniqueMetadataId,
+      result: undefined,
     };
   } catch (error) {
     console.error(error);
     return {
       success: false,
-      error: "Failed to update session",
+      error: "Failed to update session. Please contact support.",
     };
   }
 }
@@ -81,22 +79,27 @@ export async function storeUserOperation(
   name: string,
   tool: string,
   createdAt: string,
-): Promise<ApiResponse<ResultSet>> {
+): Promise<ApiResponse<string>> {
   try {
-    const result = await turso.execute({
-      sql: "INSERT INTO user_operations (user_id, name, tool, created_at) VALUES (?, ?, ?, ?)",
-      args: [userId, name, tool, createdAt],
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    const downloadCode = Array.from({ length: 6 }, () =>
+      chars.charAt(Math.floor(Math.random() * chars.length)),
+    ).join("");
+
+    await turso.execute({
+      sql: "INSERT INTO user_operations (user_id, name, tool, created_at, download_code) VALUES (?, ?, ?, ?, ?)",
+      args: [userId, name, tool, createdAt, downloadCode],
     });
 
     return {
       success: true,
-      result: result,
+      result: downloadCode,
     };
   } catch (error) {
     console.error(error);
     return {
       success: false,
-      error: "Failed to store user operation",
+      error: "Failed to store operation. Please contact support.",
     };
   }
 }
@@ -120,7 +123,7 @@ export const getTools: () => Promise<
         console.error(error);
         return {
           success: false,
-          error: "Failed to get tools",
+          error: "Failed to get available tools. Please try again.",
         };
       }
     },
@@ -148,7 +151,7 @@ export async function getToolData(
     console.error(error);
     return {
       success: false,
-      error: "Failed to get tool data",
+      error: "Failed to get tool data. Please try again.",
     };
   }
 }
@@ -174,7 +177,7 @@ export async function getUserToolOperations(
     console.error(error);
     return {
       success: false,
-      error: "Failed to get user operations",
+      error: "Failed to get user operations. Please try again.",
     };
   }
 }
@@ -196,7 +199,7 @@ export async function getS3FileUrl(
     console.error(error);
     return {
       success: false,
-      error: "Failed to get file URL",
+      error: "Failed to get file URL. Please try again.",
     };
   }
 }
@@ -225,7 +228,81 @@ export async function deleteFile(
     console.error(error);
     return {
       success: false,
-      error: "Failed to delete file",
+      error: "Failed to delete file. Please try again or contact support.",
+    };
+  }
+}
+
+export async function getUserData(): Promise<
+  ApiResponse<z.infer<typeof userSchema>>
+> {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const response = await turso.execute({
+      sql: "SELECT * FROM users WHERE user_id = ?",
+      args: [userId],
+    });
+
+    const validatedUser = userSchema.parse(response.rows[0]);
+
+    return {
+      success: true,
+      result: validatedUser,
+    };
+  } catch (error) {
+    console.error(error);
+    return {
+      success: false,
+      error: "Failed to get user data. Please try again.",
+    };
+  }
+}
+
+export async function getUserCredits(
+  userId: string,
+): Promise<ApiResponse<number>> {
+  try {
+    const result = await turso.execute({
+      sql: "SELECT credits FROM users WHERE user_id = ?",
+      args: [userId],
+    });
+
+    return {
+      success: true,
+      result: result.rows[0].credits as number,
+    };
+  } catch (error) {
+    console.error(error);
+    return {
+      success: false,
+      error: "Failed to get user credits. Please try again or contact support.",
+    };
+  }
+}
+
+export async function updateUserCredits(
+  userId: string,
+  credits: number,
+): Promise<ApiResponse<void>> {
+  try {
+    await turso.execute({
+      sql: "UPDATE users SET credits = ? WHERE user_id = ?",
+      args: [credits, userId],
+    });
+
+    return {
+      success: true,
+      result: undefined,
+    };
+  } catch (error) {
+    console.error(error);
+    return {
+      success: false,
+      error: "Failed to update user credits. Please try again.",
     };
   }
 }
