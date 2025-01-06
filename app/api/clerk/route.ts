@@ -53,7 +53,7 @@ export async function POST(req: Request) {
   }
 
   if (eventType === "user.deleted") {
-    const result = await turso.execute({
+    await turso.execute({
       sql: "DELETE FROM users WHERE user_id = ?",
       args: [id],
     });

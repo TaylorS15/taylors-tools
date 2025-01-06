@@ -1,5 +1,4 @@
 "use client";
-import { Skeleton } from "@/components/ui/skeleton";
 import { SignOutButton, useUser } from "@clerk/nextjs";
 import { useState } from "react";
 import {
