@@ -46,7 +46,7 @@ export async function POST(req: Request) {
   }
 
   if (eventType === "user.created") {
-    const result = await turso.execute({
+    await turso.execute({
       sql: "INSERT INTO users (user_id) VALUES (?)",
       args: [id],
     });
