@@ -29,3 +29,15 @@ export const userOperationsSchema = z.object({
   download_code: z.string().min(6).max(6),
   created_at: z.string().min(1).max(255),
 });
+
+export const imgToPdfOptionsSchema = z.object({
+  type: z.literal("img-to-pdf"),
+  images: z.array(z.string().min(1).max(255)),
+  saveToProfile: z.boolean(),
+  title: z.string().min(1).max(255),
+  selectedImageFit: z.union([
+    z.literal("FIT"),
+    z.literal("STRETCH"),
+    z.literal("FILL"),
+  ]),
+});

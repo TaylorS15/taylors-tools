@@ -154,13 +154,16 @@ export default function ImagesToPdf() {
 
     const payload = {
       clientSecret,
-      images: encodedImages,
-      saveToProfile: user ? saveToProfile : false,
-      title,
-      selectedImageFit,
+      options: {
+        type: "img-to-pdf",
+        images: encodedImages,
+        saveToProfile: user ? saveToProfile : false,
+        title,
+        selectedImageFit,
+      },
     };
 
-    const response = await fetch("/api/tool/img-to-pdf", {
+    const response = await fetch("/api/tool", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -378,7 +381,7 @@ export default function ImagesToPdf() {
             >
               <button
                 onClick={() => setCheckoutState("INPUT")}
-                className="flex items-center gap-2 text-blue-600 hover:underline"
+                className="flex w-min items-center gap-2 text-blue-600 hover:underline"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Back
@@ -405,7 +408,7 @@ export default function ImagesToPdf() {
             >
               <button
                 onClick={() => setCheckoutState("INPUT")}
-                className="flex items-center gap-2 text-blue-600 hover:underline"
+                className="flex w-min items-center gap-2 text-blue-600 hover:underline"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Back
