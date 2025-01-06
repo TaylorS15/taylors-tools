@@ -14,9 +14,6 @@ import { imgToPdfOptionsSchema } from "@/lib/schemas";
 export async function POST(req: Request) {
   try {
     const { clientSecret, options } = await req.json();
-    if (!clientSecret || !options) {
-      return NextResponse.json({ error: "Invalid request" }, { status: 400 });
-    }
 
     let validatedOptions = undefined;
 

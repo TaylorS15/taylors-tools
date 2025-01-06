@@ -32,9 +32,9 @@ export const userOperationsSchema = z.object({
 
 export const imgToPdfOptionsSchema = z.object({
   type: z.literal("img-to-pdf"),
-  images: z.array(z.string().min(1).max(255)),
+  images: z.array(z.string().min(1)),
   saveToProfile: z.boolean(),
-  title: z.string().min(1).max(255),
+  title: z.string().max(255),
   selectedImageFit: z.union([
     z.literal("FIT"),
     z.literal("STRETCH"),

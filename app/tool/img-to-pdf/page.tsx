@@ -459,7 +459,7 @@ export default function ImagesToPdf() {
               </button>
               <div className="my-auto flex w-full flex-col items-center justify-center gap-4">
                 <p className="text-xl font-semibold text-blue-600">Success!</p>
-                <p className="text-center text-sm text-zinc-700">
+                <p className="max-w-md text-center text-sm text-zinc-700">
                   This link will expire in 1 hour, but you can access it later
                   by saving your download code or viewing it from your profile
                   (if signed in).
