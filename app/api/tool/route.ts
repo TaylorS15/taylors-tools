@@ -99,6 +99,7 @@ export async function POST(req: Request) {
       validatedOptions.title || uniqueMetadataId,
       validatedOptions.type,
       new Date().toISOString(),
+      !validatedOptions.saveToProfile,
     );
 
     if (!sqlResult.success) {

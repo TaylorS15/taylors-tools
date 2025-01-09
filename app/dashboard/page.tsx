@@ -215,7 +215,11 @@ function Operation({
       </div>
       <button
         onClick={async () => {
-          const url = await getS3FileUrl(operation.name, operation.tool);
+          const url = await getS3FileUrl(
+            operation.name,
+            operation.tool,
+            operation.temporary,
+          );
           if (url.success) window.open(url.result, "_blank");
         }}
         className="h-min text-blue-600 hover:underline"

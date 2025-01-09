@@ -1,4 +1,5 @@
-import ToolCard from "@/components/app/tool-card";
+import ToolCard from "@/components/tool-card";
+import DownloadCard from "@/components/download-card";
 import RequestForm from "@/components/request-form";
 import { getTools } from "@/lib/server";
 
@@ -21,6 +22,8 @@ export default async function Home() {
 
         {tools.success &&
           tools.result.map((tool) => <ToolCard key={tool.name} {...tool} />)}
+
+        <DownloadCard />
       </div>
 
       <div className="flex w-full flex-col justify-center gap-6">

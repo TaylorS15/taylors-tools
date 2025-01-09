@@ -1,4 +1,5 @@
 "use client";
+import { useUser } from "@clerk/nextjs";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
@@ -14,6 +15,7 @@ const requestInputSchema = z.object({
 type RequestInput = z.infer<typeof requestInputSchema>;
 
 export default function RequestForm() {
+  const { user } = useUser();
   const [successfulRequest, setSuccessfulRequest] = useState(false);
   const [serverError, setServerError] = useState(false);
 
@@ -49,9 +51,11 @@ export default function RequestForm() {
       <form onSubmit={handleSubmit(onSubmit)} className="flex gap-4">
         <div className="w-full max-w-xl">
           <input
-            placeholder="Request Form"
-            className="h-10 w-full rounded-md border bg-zinc-100 px-3 focus:outline-none disabled:cursor-wait disabled:bg-zinc-200"
-            disabled={isSubmitting}
+            placeholder={
+              user ? "Tool request" : "Must be signed in to submit a request!"
+            }
+            className="h-10 w-full rounded-md border bg-zinc-100 px-3 focus:outline-none disabled:cursor-not-allowed disabled:bg-zinc-200"
+            disabled={isSubmitting || !user}
             {...register("requestInput")}
           />
           <p className="ml-2 mt-1 text-xs font-medium text-red-500">
@@ -65,8 +69,8 @@ export default function RequestForm() {
         </div>
         <button
           type="submit"
-          disabled={isSubmitting}
-          className="h-10 rounded-md px-3 transition hover:bg-zinc-100 hover:text-blue-600 disabled:cursor-wait disabled:bg-zinc-100 disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-inherit"
+          disabled={isSubmitting || !user}
+          className="h-10 rounded-md px-3 transition hover:bg-zinc-100 hover:text-blue-600 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-inherit"
         >
           {isSubmitting ? "Loading..." : "Submit"}
         </button>

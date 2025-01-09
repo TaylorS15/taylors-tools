@@ -28,6 +28,7 @@ export const userOperationsSchema = z.object({
   tool: z.string().min(1).max(255),
   download_code: z.string().min(6).max(6),
   created_at: z.string().min(1).max(255),
+  temporary: z.number().int().min(0).max(1),
 });
 
 export const imgToPdfOptionsSchema = z.object({

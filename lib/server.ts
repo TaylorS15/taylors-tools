@@ -79,6 +79,7 @@ export async function storeUserOperation(
   name: string,
   tool: string,
   createdAt: string,
+  isTemporary: boolean,
 ): Promise<ApiResponse<string>> {
   try {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -87,8 +88,8 @@ export async function storeUserOperation(
     ).join("");
 
     await turso.execute({
-      sql: "INSERT INTO user_operations (user_id, name, tool, created_at, download_code) VALUES (?, ?, ?, ?, ?)",
-      args: [userId, name, tool, createdAt, downloadCode],
+      sql: "INSERT INTO user_operations (user_id, name, tool, created_at, download_code, temporary) VALUES (?, ?, ?, ?, ?, ?)",
+      args: [userId, name, tool, createdAt, downloadCode, isTemporary ? 1 : 0],
     });
 
     return {
@@ -185,16 +186,29 @@ export async function getUserToolOperations(
 export async function getS3FileUrl(
   name: string,
   tool: string,
+  isTemporary: number,
 ): Promise<ApiResponse<string>> {
   try {
     const { userId } = await auth();
-    if (!userId) {
-      return { success: false, error: "Unauthorized" };
+    if (userId) {
+      if (isTemporary) {
+        const result = await getSignedS3DownloadUrl(`temp/${name}`);
+        return { success: true, result: result };
+      }
+
+      const result = await getSignedS3DownloadUrl(`${tool}/${userId}/${name}`);
+      return { success: true, result: result };
     }
 
-    const result = await getSignedS3DownloadUrl(`${tool}/${userId}/${name}`);
+    if (!userId) {
+      const result = await getSignedS3DownloadUrl(`temp/${name}`);
+      return { success: true, result: result };
+    }
 
-    return { success: true, result: result };
+    return {
+      success: false,
+      error: "Error getting file. Please try again or contact support.",
+    };
   } catch (error) {
     console.error(error);
     return {
@@ -303,6 +317,42 @@ export async function updateUserCredits(
     return {
       success: false,
       error: "Failed to update user credits. Please try again.",
+    };
+  }
+}
+
+export async function getUserOperationLink(
+  downloadCode: string,
+): Promise<ApiResponse<string>> {
+  try {
+    const response = await turso.execute({
+      sql: "SELECT * FROM user_operations WHERE download_code = ?",
+      args: [downloadCode],
+    });
+
+    const validatedOperation = userOperationsSchema.parse(response.rows[0]);
+
+    const url = await getS3FileUrl(
+      validatedOperation.name,
+      validatedOperation.tool,
+      validatedOperation.temporary,
+    );
+    if (!url.success) {
+      return {
+        success: false,
+        error: url.error,
+      };
+    }
+
+    return {
+      success: true,
+      result: url.result,
+    };
+  } catch (error) {
+    console.error(error);
+    return {
+      success: false,
+      error: "Failed to get operation link. Please try again.",
     };
   }
 }

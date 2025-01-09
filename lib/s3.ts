@@ -43,7 +43,7 @@ export async function generateS3Key(
   const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, "_");
 
   if (metadata.isTemporary) {
-    return { success: true, result: `${sanitizedFileName}` };
+    return { success: true, result: `temp/${sanitizedFileName}` };
   }
 
   if (!metadata.userId) {
