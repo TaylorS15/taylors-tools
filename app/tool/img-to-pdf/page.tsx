@@ -8,7 +8,7 @@ import {
   useCallback,
   useMemo,
 } from "react";
-import { ArrowLeft, Copy, LoaderCircle, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getToolData } from "@/lib/server";
 import { usePreventUnload } from "@/hooks/use-prevent-unload";
@@ -17,11 +17,14 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Toaster } from "@/components/ui/toaster";
-import { AnimatePresence, motion, Variants } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import CheckoutButtons from "@/components/checkout-buttons";
-import StripeCheckout from "@/components/stripe-checkout";
 import useFirstMount from "@/hooks/use-first-mount";
-import CreditCheckout from "@/components/credit-checkout";
+import CreditCheckoutWindow from "@/components/credit-checkout-window";
+import LoadingWindow from "@/components/loading-window";
+import PurchaseSuccessWindow from "@/components/purchase-success-window";
+import { containerVariants } from "@/lib/utils";
+import StripeCheckoutWindow from "@/components/stripe-checkout-window";
 
 interface FilePreview {
   id: string;
@@ -363,145 +366,34 @@ export default function ImagesToPdf() {
                 </div>
 
                 <CheckoutButtons
+                  copy={"Convert"}
                   enabled={previews.length > 0}
                   setCheckoutState={setCheckoutState}
                 />
               </div>
             </motion.div>
           )}
-
           {checkoutState === "CREDIT_CHECKOUT" && (
-            <motion.div
-              key="credit"
-              variants={containerVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              className="flex h-full flex-col gap-4"
-            >
-              <button
-                onClick={() => setCheckoutState("INPUT")}
-                className="flex w-min items-center gap-2 text-blue-600 hover:underline"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back
-              </button>
-              {toolQuery.data ? (
-                <CreditCheckout
-                  tool={toolQuery.data}
-                  onPaymentSuccess={onPaymentSuccess}
-                />
-              ) : (
-                <Skeleton className="h-12 w-full" />
-              )}
-            </motion.div>
+            <CreditCheckoutWindow
+              setCheckoutState={setCheckoutState}
+              onPaymentSuccess={onPaymentSuccess}
+              toolQuery={toolQuery}
+            />
           )}
-
           {checkoutState === "STRIPE_CHECKOUT" && (
-            <motion.div
-              key="checkout"
-              variants={containerVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              className="flex flex-col gap-4 overflow-y-scroll"
-            >
-              <button
-                onClick={() => setCheckoutState("INPUT")}
-                className="flex w-min items-center gap-2 text-blue-600 hover:underline"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back
-              </button>
-              <StripeCheckout
-                onPaymentSuccess={onPaymentSuccess}
-                stripePriceId={toolQuery.data!.stripe_price_id!}
-              />
-            </motion.div>
+            <StripeCheckoutWindow
+              setCheckoutState={setCheckoutState}
+              onPaymentSuccess={onPaymentSuccess}
+              toolQuery={toolQuery}
+            />
           )}
-
-          {checkoutState === "LOADING" && (
-            <motion.div
-              key="loading"
-              variants={containerVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              className="my-auto flex flex-col items-center justify-center gap-4"
-            >
-              <>
-                <p className="text-xl font-semibold text-blue-600">
-                  Loading...
-                </p>
-                <p className="max-w-52 text-center text-sm text-zinc-700">
-                  Please do not close this window or refresh the page.
-                </p>
-                <LoaderCircle className="h-12 w-12 animate-spin text-zinc-700" />
-              </>
-            </motion.div>
-          )}
-
+          {checkoutState === "LOADING" && <LoadingWindow />}
           {checkoutState === "SUCCESS" && (
-            <motion.div
-              key="success"
-              variants={containerVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              className="flex h-full flex-col justify-between"
-            >
-              <button
-                onClick={() => setCheckoutState("INPUT")}
-                className="flex items-center gap-2 text-blue-600 hover:underline"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back
-              </button>
-              <div className="my-auto flex w-full flex-col items-center justify-center gap-4">
-                <p className="text-xl font-semibold text-blue-600">Success!</p>
-                <p className="max-w-md text-center text-sm text-zinc-700">
-                  This link will expire in 1 hour, but you can access it later
-                  by saving your download code or viewing it from your profile
-                  (if signed in).
-                  <br></br>
-                  <br></br> If you aren&apos;t signed in, or unselected
-                  &quot;Save to profile&quot;, you must save your download code
-                  to access the file. Temporary files are permanently
-                  inaccessable after 24 hours.
-                </p>
-                <p className="max-w-52 text-center text-sm text-zinc-700">
-                  <a
-                    href={downloadLink}
-                    rel="noreferrer"
-                    target="_blank"
-                    className="text-lg text-blue-600 hover:underline"
-                  >
-                    Click here to open
-                  </a>
-                </p>
-
-                <div className="flex flex-col items-center gap-2">
-                  <p className="text-xs text-zinc-700">Download code</p>
-                  <div className="flex items-center gap-6 rounded-lg border border-zinc-200 bg-white p-2 text-lg text-zinc-700">
-                    <p className="">{downloadCode}</p>
-                    <Copy
-                      className="h-8 w-8 cursor-pointer rounded-lg p-1 hover:bg-zinc-100"
-                      onClick={() => {
-                        navigator.clipboard.writeText(downloadCode);
-                        toast({
-                          title: "Copied to clipboard!",
-                        });
-                      }}
-                    />
-                  </div>
-                </div>
-
-                <p className="max-w-96 text-center text-sm font-bold text-zinc-700">
-                  Warning: Leaving this page without saving your code can cause
-                  you to lose access to your file.
-                </p>
-              </div>
-            </motion.div>
+            <PurchaseSuccessWindow
+              setCheckoutState={setCheckoutState}
+              downloadLink={downloadLink}
+              downloadCode={downloadCode}
+            />
           )}
         </AnimatePresence>
       </div>
@@ -510,30 +402,3 @@ export default function ImagesToPdf() {
     </main>
   );
 }
-
-const containerVariants: Variants = {
-  enter: {
-    x: "100%",
-    transition: {
-      type: "tween",
-      duration: 0.2,
-      ease: "easeInOut",
-    },
-  },
-  center: {
-    x: 0,
-    transition: {
-      type: "tween",
-      duration: 0.2,
-      ease: "easeInOut",
-    },
-  },
-  exit: {
-    x: "-100%",
-    transition: {
-      type: "tween",
-      duration: 0.2,
-      ease: "easeInOut",
-    },
-  },
-};

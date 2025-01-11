@@ -20,7 +20,7 @@ export default function ToolCard(props: z.infer<typeof toolSchema>) {
         <p className="h-full w-full max-w-96">{props.description}</p>
         <Link
           href={`/tool/${props.url}`}
-          className="mt-auto w-full font-medium text-purple-600 transition-all hover:text-black hover:underline group-hover:scale-100 group-hover:opacity-100 md:scale-95 md:opacity-0"
+          className="mt-auto w-full font-medium text-blue-600 transition-all hover:text-black hover:underline group-hover:scale-100 group-hover:opacity-100 md:scale-95 md:opacity-0"
         >
           <p className="flex justify-between">
             {props.cta}

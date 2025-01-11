@@ -1,10 +1,12 @@
 import { useUser } from "@clerk/nextjs";
 
 export default function CheckoutButtons({
+  copy,
   enabled,
   setCheckoutState,
 }: {
   enabled: boolean;
+  copy: string;
   setCheckoutState: React.Dispatch<
     React.SetStateAction<
       "INPUT" | "CREDIT_CHECKOUT" | "STRIPE_CHECKOUT" | "LOADING" | "SUCCESS"
@@ -19,7 +21,7 @@ export default function CheckoutButtons({
         className="flex h-full w-full items-center justify-center rounded-md bg-indigo-500 font-medium text-white transition-all hover:bg-indigo-400 disabled:bg-indigo-300/50"
         disabled={!enabled}
       >
-        Convert with
+        {copy} with
         <img src="/stripe-white.svg" alt="Stripe" className="h-7" />
       </button>
       <button
@@ -27,7 +29,7 @@ export default function CheckoutButtons({
         className="h-full w-full rounded-md bg-green-500 font-medium text-white transition-all hover:bg-green-400 disabled:bg-green-300/50"
         disabled={!enabled || user === undefined || user === null}
       >
-        Convert with Credits
+        {copy} with Credits
       </button>
     </div>
   );
