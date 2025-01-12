@@ -1,12 +1,12 @@
 "use client";
 import { useEffect, useState, useRef, ChangeEvent, DragEvent } from "react";
-import { ArrowLeft, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Toaster } from "@/components/ui/toaster";
-import { AnimatePresence, motion, Variants } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import CheckoutButtons from "@/components/checkout-buttons";
 import useFirstMount from "@/hooks/use-first-mount";
 import { useQuery } from "@tanstack/react-query";

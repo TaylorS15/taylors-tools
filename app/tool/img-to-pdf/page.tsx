@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Toaster } from "@/components/ui/toaster";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, } from "motion/react";
 import CheckoutButtons from "@/components/checkout-buttons";
 import useFirstMount from "@/hooks/use-first-mount";
 import CreditCheckoutWindow from "@/components/credit-checkout-window";

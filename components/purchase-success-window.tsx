@@ -1,7 +1,7 @@
 import { useToast } from "@/hooks/use-toast";
 import { containerVariants } from "@/lib/utils";
 import { ArrowLeft, Copy } from "lucide-react";
-import { motion, Variants } from "motion/react";
+import { motion } from "motion/react";
 
 export default function PurchaseSuccessWindow({
   setCheckoutState,

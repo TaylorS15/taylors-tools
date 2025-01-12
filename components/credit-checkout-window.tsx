@@ -1,4 +1,4 @@
-import { motion, Variants } from "motion/react";
+import { motion } from "motion/react";
 import { Skeleton } from "@/components/ui/skeleton";
 import CreditCheckout from "@/components/credit-checkout";
 import { UseQueryResult } from "@tanstack/react-query";
