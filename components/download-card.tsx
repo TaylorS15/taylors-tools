@@ -26,8 +26,8 @@ export default function DownloadCard() {
           </div>
           <p className="h-full w-full max-w-96">
             If you previously saved a download code, enter it here to access
-            your file with a secure, temporary, link. If your file was
-            temporary, it will be inaccessible after 24 hours.
+            your file with a secure link. If your file was temporary, it will be
+            inaccessible after 24 hours.
           </p>
           <div className="flex w-full items-center gap-4">
             <input

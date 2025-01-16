@@ -134,12 +134,12 @@ export const getTools: () => Promise<
 );
 
 export async function getToolData(
-  toolName: string,
+  toolUrl: string,
 ): Promise<ApiResponse<z.infer<typeof toolSchema>>> {
   try {
     const response = await turso.execute({
       sql: "SELECT * FROM tools WHERE url = ?",
-      args: [toolName],
+      args: [toolUrl],
     });
 
     const validatedTool = toolSchema.parse(response.rows[0]);
@@ -353,6 +353,30 @@ export async function getUserOperationLink(
     return {
       success: false,
       error: "Failed to get operation link. Please try again.",
+    };
+  }
+}
+
+export async function updateUserTotalOperations(): Promise<
+  ApiResponse<undefined>
+> {
+  try {
+    const { userId } = await auth();
+
+    await turso.execute({
+      sql: "UPDATE users SET total_operations = total_operations + 1 WHERE id = ?",
+      args: [userId],
+    });
+
+    return {
+      success: true,
+      result: undefined,
+    };
+  } catch (error) {
+    console.error(error);
+    return {
+      success: false,
+      error: "Failed to update user total operations. Please try again.",
     };
   }
 }

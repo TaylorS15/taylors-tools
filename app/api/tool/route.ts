@@ -4,6 +4,7 @@ import {
   storeUserOperation,
   updateFulfilledSession,
   updateUserCredits,
+  updateUserTotalOperations,
   verifyStripePayment,
 } from "@/lib/server";
 import { uploadS3File } from "@/lib/s3";
@@ -94,6 +95,7 @@ export async function POST(req: Request) {
     }
 
     const uniqueMetadataId = crypto.randomUUID();
+
     const sqlResult = await storeUserOperation(
       userId ?? "anonymous",
       validatedOptions.title || uniqueMetadataId,
@@ -101,7 +103,6 @@ export async function POST(req: Request) {
       new Date().toISOString(),
       !validatedOptions.saveToProfile,
     );
-
     if (!sqlResult.success) {
       return NextResponse.json({ error: sqlResult.error }, { status: 400 });
     }
@@ -115,6 +116,16 @@ export async function POST(req: Request) {
     });
     if (!s3Result.success) {
       return NextResponse.json({ error: s3Result.error }, { status: 400 });
+    }
+
+    const updateTotalOperationsResult = await updateUserTotalOperations();
+    if (!updateTotalOperationsResult.success) {
+      return NextResponse.json(
+        { error: updateTotalOperationsResult.error },
+        {
+          status: 400,
+        },
+      );
     }
 
     if (clientSecret !== "") {

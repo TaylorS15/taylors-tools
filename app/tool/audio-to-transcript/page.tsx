@@ -1,5 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getToolData } from "@/lib/server";
+import { usePreventUnload } from "@/hooks/use-prevent-unload";
 import { useUser } from "@clerk/nextjs";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -8,39 +11,41 @@ import { Toaster } from "@/components/ui/toaster";
 import { AnimatePresence, motion } from "motion/react";
 import CheckoutButtons from "@/components/checkout-buttons";
 import useFirstMount from "@/hooks/use-first-mount";
-import { useQuery } from "@tanstack/react-query";
-import { getToolData } from "@/lib/server";
-import { Allura } from "next/font/google";
-import PurchaseSuccessWindow from "@/components/purchase-success-window";
-import LoadingWindow from "@/components/loading-window";
 import CreditCheckoutWindow from "@/components/credit-checkout-window";
+import LoadingWindow from "@/components/loading-window";
+import PurchaseSuccessWindow from "@/components/purchase-success-window";
+import { containerVariants } from "@/lib/utils";
 import StripeCheckoutWindow from "@/components/stripe-checkout-window";
 import { useFileInputContext } from "@/components/file-input-provider";
 import FileInput from "@/components/file-input";
+import { useRouter, useSearchParams } from "next/navigation";
 
-const AlluraFont = Allura({ subsets: ["latin"], weight: "400" });
-
-export default function PdfSigning() {
+export default function ImagesToPdf() {
   const { user } = useUser();
-  const { toast } = useToast();
-  const { hasLoaded } = useFirstMount();
   const { previews, setPreviews } = useFileInputContext();
 
   const [saveToProfile, setSaveToProfile] = useState(true);
   const [title, setTitle] = useState("");
-  const [signature, setSignature] = useState("");
-  // const [date, setDate] = useState("");
+
+  const params = useSearchParams();
+  const router = useRouter();
+  const checkoutStateFromUrl = params.get("checkout_state");
 
   const [downloadLink, setDownloadLink] = useState("");
   const [downloadCode, setDownloadCode] = useState("");
-  const [checkoutState, setCheckoutState] = useState<
-    "INPUT" | "CREDIT_CHECKOUT" | "STRIPE_CHECKOUT" | "LOADING" | "SUCCESS"
-  >("INPUT");
+
+  usePreventUnload({
+    enabled:
+      checkoutStateFromUrl === "LOADING" || checkoutStateFromUrl === "SUCCESS",
+    message: "Please wait until the conversion is complete before leaving.",
+  });
+  const { hasLoaded } = useFirstMount();
+  const { toast } = useToast();
 
   const toolQuery = useQuery({
-    queryKey: ["tool", "pdf-signing"],
+    queryKey: ["tool", "audio-to-transcript"],
     queryFn: async () => {
-      const response = await getToolData("pdf-signing");
+      const response = await getToolData("audio-to-transcript");
       if (!response.success) {
         toast({
           title: "Error",
@@ -53,15 +58,18 @@ export default function PdfSigning() {
 
       return response.result;
     },
+    enabled: true,
   });
 
+  console.log(toolQuery.data);
+
   async function onPaymentSuccess(clientSecret: string) {
-    setCheckoutState("LOADING");
+    router.push(`?checkout_state=LOADING`, { scroll: false });
 
     const payload = {
       clientSecret,
       options: {
-        type: "pdf-signing",
+        type: "audio-to-transcript",
         saveToProfile: user ? saveToProfile : false,
         title,
       },
@@ -76,7 +84,7 @@ export default function PdfSigning() {
     });
 
     if (!response.ok) {
-      setCheckoutState("INPUT");
+      router.push(`?checkout_state=INPUT`, { scroll: false });
       const error = await response.json();
       toast({
         title: "Error",
@@ -93,72 +101,53 @@ export default function PdfSigning() {
 
     setPreviews([]);
     setTitle("");
-    setCheckoutState("SUCCESS");
+    router.push(`?checkout_state=SUCCESS`, { scroll: false });
   }
+
+  useEffect(() => {
+    router.push(`?checkout_state=INPUT`, { scroll: false });
+  }, []);
 
   return (
     <main className="flex w-full flex-col-reverse items-center">
-      <div className="aspect-[1/1.4] w-full max-w-xl p-4 lg:max-w-3xl">
-        <div className="relative h-full w-full max-w-xl overflow-y-scroll rounded-md bg-zinc-100 px-4 py-1 lg:max-w-3xl">
-          {previews && (
-            <div className="group relative my-3">
-              <div className="aspect-[1/1.4] overflow-hidden rounded-lg bg-gray-100">
-                <img
-                  src={previews[0].previewUrl}
-                  alt="Preview"
-                  className="h-full w-full"
-                />
-              </div>
-            </div>
-          )}
-          <div
-            className={`${checkoutState === "LOADING" ? "absolute inset-0" : "hidden"} bg-white/50 backdrop-blur-sm`}
-          />
-        </div>
+      <div className="w-full max-w-3xl p-4">
+        <div className="relative w-full overflow-y-scroll rounded-md bg-zinc-100 px-4 py-1"></div>
       </div>
 
-      <div className="flex h-max w-full max-w-xl flex-col gap-6 overflow-x-clip p-4 lg:max-w-3xl">
+      <div className="flex h-max w-full max-w-xl flex-col gap-6 overflow-x-clip p-4 md:max-w-3xl">
         <AnimatePresence mode="wait">
-          {checkoutState === "INPUT" && (
+          {!checkoutStateFromUrl || checkoutStateFromUrl === "INPUT" ? (
             <motion.div
               key="input"
+              variants={containerVariants}
               initial={hasLoaded ? "enter" : "center"}
               animate="center"
               exit="exit"
               className="mt-auto flex h-full flex-col gap-4"
             >
               <h1 className="mb-auto text-center text-xl font-semibold text-blue-600">
-                PDF Signing
+                Audio to Transcript
               </h1>
               <input
                 type="text"
                 className="w-full rounded-lg border border-zinc-200 p-2 text-sm focus:outline-none active:outline-none"
-                placeholder="Enter a document title (optional)"
+                placeholder="Enter a title (optional)"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
               />
-              <input
-                type="text"
-                className={`${AlluraFont.className} h-28 w-full rounded-lg border border-zinc-200 p-2 text-center text-4xl focus:outline-none active:outline-none md:text-5xl lg:text-6xl`}
-                placeholder="Jane Doe"
-                value={signature}
-                onChange={(e) => setSignature(e.target.value)}
-              />
-              <div className="flex w-full items-center justify-between rounded-lg border border-zinc-200 p-2 text-sm text-zinc-700">
-                <p>Date</p>
-                <input type="date" className="bg-zinc-50" />
-              </div>
               <div
                 className={`${!user ? "cursor-not-allowed text-zinc-400" : "text-zinc-700"} flex w-full items-center justify-between rounded-lg border border-zinc-200 p-2 text-sm`}
               >
-                <p>Save to profile after signing</p>
+                <p>Save to profile after conversion</p>
                 {user === undefined ? (
-                  <Skeleton className="h-5 w-9 rounded-full bg-zinc-200" />
+                  <Skeleton className="/> h-5 w-9 rounded-full bg-zinc-200" />
                 ) : (
                   <Switch
                     checked={saveToProfile}
                     disabled={!user}
-                    onCheckedChange={(checked) => setSaveToProfile(checked)}
+                    onCheckedChange={(checked) => {
+                      setSaveToProfile(checked);
+                    }}
                   />
                 )}
               </div>
@@ -166,36 +155,40 @@ export default function PdfSigning() {
               <div className="flex w-full flex-col justify-between gap-6">
                 <FileInput
                   numberOfFiles={1}
-                  maxSizeBytes={20 * 1024 * 1024}
-                  allowedTypes={["application/pdf"]}
+                  maxSizeBytes={2 * 1024 * 1024 * 1024}
+                  allowedTypes={[
+                    "audio/mpeg",
+                    "audio/mp3",
+                    "audio/wav",
+                    "video/mp4",
+                    "video/webm",
+                    "video/x-matroska",
+                  ]}
+                  splitAudio={true}
                 />
 
                 <CheckoutButtons
-                  copy={"Sign"}
-                  enabled={previews !== null}
-                  setCheckoutState={setCheckoutState}
+                  copy={"Convert"}
+                  enabled={previews.length > 0}
                 />
               </div>
             </motion.div>
-          )}
-          {checkoutState === "CREDIT_CHECKOUT" && (
+          ) : null}
+          {checkoutStateFromUrl === "CREDIT_CHECKOUT" && toolQuery.data && (
             <CreditCheckoutWindow
-              setCheckoutState={setCheckoutState}
               onPaymentSuccess={onPaymentSuccess}
               toolQuery={toolQuery}
             />
           )}
-          {checkoutState === "STRIPE_CHECKOUT" && (
+          {checkoutStateFromUrl === "STRIPE_CHECKOUT" && toolQuery.data && (
             <StripeCheckoutWindow
-              setCheckoutState={setCheckoutState}
               onPaymentSuccess={onPaymentSuccess}
               toolQuery={toolQuery}
             />
           )}
-          {checkoutState === "LOADING" && <LoadingWindow />}
-          {checkoutState === "SUCCESS" && (
+          {checkoutStateFromUrl === "LOADING" && <LoadingWindow />}
+          {checkoutStateFromUrl === "SUCCESS" && (
             <PurchaseSuccessWindow
-              setCheckoutState={setCheckoutState}
               downloadLink={downloadLink}
               downloadCode={downloadCode}
             />

@@ -60,9 +60,11 @@ export default async function Home() {
                   <p className="w-max flex-1">{tool.name}</p>
                   <p className="w-16 text-center text-zinc-600 md:w-28">
                     ${tool.pricing_single / 100}
+                    {tool.url === "audio-to-transcript" ? "/min" : ""}
                   </p>
                   <p className="w-16 text-center text-zinc-600 md:w-44">
                     {tool.pricing_credits}
+                    {tool.url === "audio-to-transcript" ? "/min" : ""}
                   </p>
                 </div>
               );

@@ -1,13 +1,5 @@
 "use client";
-import {
-  useEffect,
-  useState,
-  useRef,
-  ChangeEvent,
-  DragEvent,
-  useCallback,
-  useMemo,
-} from "react";
+import { useState } from "react";
 import { X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getToolData } from "@/lib/server";
@@ -17,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Toaster } from "@/components/ui/toaster";
-import { AnimatePresence, motion, } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import CheckoutButtons from "@/components/checkout-buttons";
 import useFirstMount from "@/hooks/use-first-mount";
 import CreditCheckoutWindow from "@/components/credit-checkout-window";
@@ -25,19 +17,14 @@ import LoadingWindow from "@/components/loading-window";
 import PurchaseSuccessWindow from "@/components/purchase-success-window";
 import { containerVariants } from "@/lib/utils";
 import StripeCheckoutWindow from "@/components/stripe-checkout-window";
-
-interface FilePreview {
-  id: string;
-  file: File;
-  previewUrl: string;
-}
+import FileInput from "@/components/file-input";
+import { useFileInputContext } from "@/components/file-input-provider";
 
 export default function ImagesToPdf() {
   const { user } = useUser();
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [previews, setPreviews] = useState<FilePreview[]>([]);
-  const [isDragging, setIsDragging] = useState(false);
+  const { previews, setPreviews } = useFileInputContext();
+  const { hasLoaded } = useFirstMount();
+  const { toast } = useToast();
 
   const [saveToProfile, setSaveToProfile] = useState(true);
   const [title, setTitle] = useState("");
@@ -55,8 +42,6 @@ export default function ImagesToPdf() {
     enabled: checkoutState === "LOADING" || checkoutState === "SUCCESS",
     message: "Please wait until the conversion is complete before leaving.",
   });
-  const { hasLoaded } = useFirstMount();
-  const { toast } = useToast();
 
   const toolQuery = useQuery({
     queryKey: ["tool", "img-to-pdf"],
@@ -75,70 +60,6 @@ export default function ImagesToPdf() {
       return response.result;
     },
   });
-
-  const allowedTypes = useMemo(
-    () => new Set(["image/jpeg", "image/jpg", "image/png", "image/webp"]),
-    [],
-  );
-
-  function validateFiles(files: File[]): boolean {
-    if (previews.length + files.length > 20) {
-      toast({
-        title: "Error",
-        description: "Maximum 20 files allowed",
-        variant: "destructive",
-      });
-      return false;
-    }
-
-    const maxSizeBytes = 5 * 1024 * 1024;
-    const invalidFile = files.find(
-      (file) => !allowedTypes.has(file.type) || file.size > maxSizeBytes,
-    );
-
-    if (invalidFile) {
-      toast({
-        title: "Error",
-        description: !allowedTypes.has(invalidFile.type)
-          ? `${invalidFile.name} is not a valid image file`
-          : `${invalidFile.name} exceeds ${5}MB limit`,
-        variant: "destructive",
-      });
-      return false;
-    }
-
-    return true;
-  }
-
-  function handleFiles(files: FileList) {
-    const newFiles = Array.from(files);
-    if (!validateFiles(newFiles)) return;
-
-    const newPreviews = newFiles.map((file, index) => ({
-      id: index.toString() + (Math.random() * 1000).toFixed(0),
-      file,
-      previewUrl: URL.createObjectURL(file),
-    }));
-
-    const combinedFiles = newPreviews.concat(previews);
-
-    combinedFiles.sort((a, b) => a.file.name.localeCompare(b.file.name));
-
-    setPreviews(combinedFiles);
-  }
-
-  const formatSize = useCallback((bytes: number): string => {
-    const units = ["B", "KB", "MB", "GB"];
-    let size = bytes;
-    let unitIndex = 0;
-
-    while (size >= 1024 && unitIndex < units.length - 1) {
-      size /= 1024;
-      unitIndex++;
-    }
-
-    return `${size.toFixed(1)} ${units[unitIndex]}`;
-  }, []);
 
   async function onPaymentSuccess(clientSecret: string) {
     setCheckoutState("LOADING");
@@ -195,15 +116,6 @@ export default function ImagesToPdf() {
     setCheckoutState("SUCCESS");
   }
 
-  // Likely necessary to prevent memory leaks when leaving the page.
-  useEffect(() => {
-    return () => {
-      previews.forEach((preview) => {
-        URL.revokeObjectURL(preview.previewUrl);
-      });
-    };
-  }, []);
-
   return (
     <main className="flex w-full flex-col-reverse items-center md:flex-row md:items-start">
       <div className="h-[calc(100dvh-14rem)] w-full max-w-xl p-4 md:w-2/5">
@@ -224,9 +136,6 @@ export default function ImagesToPdf() {
                   title={preview.file.name}
                 >
                   {preview.file.name}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {formatSize(preview.file.size)}
                 </p>
               </div>
               <p className="absolute bottom-0 left-0 flex h-7 w-max items-center rounded-bl-lg bg-white/60 px-2 py-1.5 text-xs text-gray-500">
@@ -319,51 +228,16 @@ export default function ImagesToPdf() {
               </div>
 
               <div className="flex w-full flex-col justify-between gap-6">
-                <div
-                  className={`${
-                    isDragging
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-gray-300 hover:border-gray-400"
-                  } relative w-full rounded-lg
-            border-2 border-dashed p-4
-        transition-colors`}
-                  onDragOver={() => {
-                    setIsDragging(true);
-                  }}
-                  onDragLeave={() => {
-                    setIsDragging(false);
-                  }}
-                  onDrop={(e: DragEvent<HTMLDivElement>) => {
-                    e.preventDefault();
-                    setIsDragging(false);
-                    handleFiles(e.dataTransfer.files);
-                  }}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    className="hidden"
-                    multiple
-                    accept={[...allowedTypes].join(",")}
-                    onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                      if (e.target.files) {
-                        handleFiles(e.target.files);
-                      }
-                      e.target.value = "";
-                    }}
-                  />
-
-                  <div className="flex flex-col items-center">
-                    <p className="mb-2 text-sm text-gray-600">
-                      Drop images here or click to browse
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Maximum file size: {5}MB
-                    </p>
-                    <p className="text-xs text-gray-500">Maximum 20 images</p>
-                  </div>
-                </div>
+                <FileInput
+                  numberOfFiles={20}
+                  maxSizeBytes={5 * 1024 * 1024}
+                  allowedTypes={[
+                    "image/jpeg",
+                    "image/jpg",
+                    "image/png",
+                    "image/webp",
+                  ]}
+                />
 
                 <CheckoutButtons
                   copy={"Convert"}

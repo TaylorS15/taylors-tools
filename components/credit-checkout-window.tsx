@@ -6,20 +6,16 @@ import { ArrowLeft } from "lucide-react";
 import { toolSchema } from "@/lib/schemas";
 import { z } from "zod";
 import { containerVariants } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 export default function CreditCheckoutWindow({
-  setCheckoutState,
   onPaymentSuccess,
   toolQuery,
 }: {
-  setCheckoutState: React.Dispatch<
-    React.SetStateAction<
-      "INPUT" | "CREDIT_CHECKOUT" | "STRIPE_CHECKOUT" | "LOADING" | "SUCCESS"
-    >
-  >;
   onPaymentSuccess: (clientSecret: string) => void;
   toolQuery: UseQueryResult<z.infer<typeof toolSchema> | undefined>;
 }) {
+  const router = useRouter();
   return (
     <motion.div
       key="credit"
@@ -30,7 +26,7 @@ export default function CreditCheckoutWindow({
       className="flex h-full flex-col gap-4"
     >
       <button
-        onClick={() => setCheckoutState("INPUT")}
+        onClick={() => router.push(`?checkout_state=INPUT`)}
         className="flex w-min items-center gap-2 text-blue-600 hover:underline"
       >
         <ArrowLeft className="h-4 w-4" />

@@ -5,20 +5,16 @@ import StripeCheckout from "./stripe-checkout";
 import { UseQueryResult } from "@tanstack/react-query";
 import { z } from "zod";
 import { toolSchema } from "@/lib/schemas";
+import { useRouter } from "next/navigation";
 
 export default function StripeCheckoutWindow({
-  setCheckoutState,
   onPaymentSuccess,
   toolQuery,
 }: {
-  setCheckoutState: React.Dispatch<
-    React.SetStateAction<
-      "INPUT" | "CREDIT_CHECKOUT" | "STRIPE_CHECKOUT" | "LOADING" | "SUCCESS"
-    >
-  >;
   onPaymentSuccess: (clientSecret: string) => void;
   toolQuery: UseQueryResult<z.infer<typeof toolSchema> | undefined>;
 }) {
+  const router = useRouter();
   return (
     <motion.div
       key="checkout"
@@ -29,7 +25,7 @@ export default function StripeCheckoutWindow({
       className="flex flex-col gap-4 overflow-y-scroll"
     >
       <button
-        onClick={() => setCheckoutState("INPUT")}
+        onClick={() => router.push(`?checkout_state=INPUT`)}
         className="flex w-min items-center gap-2 text-blue-600 hover:underline"
       >
         <ArrowLeft className="h-4 w-4" />

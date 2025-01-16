@@ -2,20 +2,16 @@ import { useToast } from "@/hooks/use-toast";
 import { containerVariants } from "@/lib/utils";
 import { ArrowLeft, Copy } from "lucide-react";
 import { motion } from "motion/react";
+import { useRouter } from "next/navigation";
 
 export default function PurchaseSuccessWindow({
-  setCheckoutState,
   downloadLink,
   downloadCode,
 }: {
-  setCheckoutState: React.Dispatch<
-    React.SetStateAction<
-      "INPUT" | "CREDIT_CHECKOUT" | "STRIPE_CHECKOUT" | "LOADING" | "SUCCESS"
-    >
-  >;
   downloadLink: string;
   downloadCode: string;
 }) {
+  const router = useRouter();
   const { toast } = useToast();
   return (
     <motion.div
@@ -27,7 +23,7 @@ export default function PurchaseSuccessWindow({
       className="flex h-full flex-col justify-between"
     >
       <button
-        onClick={() => setCheckoutState("INPUT")}
+        onClick={() => router.push(`?checkout_state=INPUT`)}
         className="flex items-center gap-2 text-blue-600 hover:underline"
       >
         <ArrowLeft className="h-4 w-4" />
