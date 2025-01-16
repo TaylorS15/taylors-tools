@@ -237,26 +237,24 @@ export default function ImagesToPdf() {
                     "image/png",
                     "image/webp",
                   ]}
+                  splitAudio={false}
                 />
 
                 <CheckoutButtons
                   copy={"Convert"}
                   enabled={previews.length > 0}
-                  setCheckoutState={setCheckoutState}
                 />
               </div>
             </motion.div>
           )}
           {checkoutState === "CREDIT_CHECKOUT" && (
             <CreditCheckoutWindow
-              setCheckoutState={setCheckoutState}
               onPaymentSuccess={onPaymentSuccess}
               toolQuery={toolQuery}
             />
           )}
           {checkoutState === "STRIPE_CHECKOUT" && (
             <StripeCheckoutWindow
-              setCheckoutState={setCheckoutState}
               onPaymentSuccess={onPaymentSuccess}
               toolQuery={toolQuery}
             />
@@ -264,7 +262,6 @@ export default function ImagesToPdf() {
           {checkoutState === "LOADING" && <LoadingWindow />}
           {checkoutState === "SUCCESS" && (
             <PurchaseSuccessWindow
-              setCheckoutState={setCheckoutState}
               downloadLink={downloadLink}
               downloadCode={downloadCode}
             />

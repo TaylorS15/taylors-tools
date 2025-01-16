@@ -168,26 +168,21 @@ export default function PdfSigning() {
                   numberOfFiles={1}
                   maxSizeBytes={20 * 1024 * 1024}
                   allowedTypes={["application/pdf"]}
+                  splitAudio={false}
                 />
 
-                <CheckoutButtons
-                  copy={"Sign"}
-                  enabled={previews !== null}
-                  setCheckoutState={setCheckoutState}
-                />
+                <CheckoutButtons copy={"Sign"} enabled={previews !== null} />
               </div>
             </motion.div>
           )}
           {checkoutState === "CREDIT_CHECKOUT" && (
             <CreditCheckoutWindow
-              setCheckoutState={setCheckoutState}
               onPaymentSuccess={onPaymentSuccess}
               toolQuery={toolQuery}
             />
           )}
           {checkoutState === "STRIPE_CHECKOUT" && (
             <StripeCheckoutWindow
-              setCheckoutState={setCheckoutState}
               onPaymentSuccess={onPaymentSuccess}
               toolQuery={toolQuery}
             />
@@ -195,7 +190,6 @@ export default function PdfSigning() {
           {checkoutState === "LOADING" && <LoadingWindow />}
           {checkoutState === "SUCCESS" && (
             <PurchaseSuccessWindow
-              setCheckoutState={setCheckoutState}
               downloadLink={downloadLink}
               downloadCode={downloadCode}
             />
