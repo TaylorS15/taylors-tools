@@ -100,17 +100,6 @@ export default function PdfSigning() {
     <main className="flex w-full flex-col-reverse items-center">
       <div className="aspect-[1/1.4] w-full max-w-xl p-4 lg:max-w-3xl">
         <div className="relative h-full w-full max-w-xl overflow-y-scroll rounded-md bg-zinc-100 px-4 py-1 lg:max-w-3xl">
-          {previews && (
-            <div className="group relative my-3">
-              <div className="aspect-[1/1.4] overflow-hidden rounded-lg bg-gray-100">
-                <img
-                  src={previews[0].previewUrl}
-                  alt="Preview"
-                  className="h-full w-full"
-                />
-              </div>
-            </div>
-          )}
           <div
             className={`${checkoutState === "LOADING" ? "absolute inset-0" : "hidden"} bg-white/50 backdrop-blur-sm`}
           />
