@@ -1,5 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
+  getFileDuration,
+  getToolPrice,
   getUserCredits,
   storeUserOperation,
   updateFulfilledSession,
@@ -10,27 +12,86 @@ import {
 import { uploadS3File } from "@/lib/s3";
 import { auth } from "@clerk/nextjs/server";
 import { generatePdf } from "@/lib/tools/img-to-pdf";
-import { imgToPdfOptionsSchema } from "@/lib/schemas";
+import { generateTranscript } from "@/lib/tools/audio-to-transcript";
+import {
+  audioToTranscriptRequestSchema,
+  imgToPdfRequestSchema,
+} from "@/lib/schemas";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const { clientSecret, options } = await req.json();
+    const formData = await req.formData();
+    const clientSecret = formData.get("clientSecret");
+    const files = formData.getAll("files");
+    const options = JSON.parse(formData.get("options") as string);
 
-    let validatedOptions = undefined;
+    let validatedRequest = undefined;
 
     switch (options.type) {
       case "img-to-pdf":
-        validatedOptions = imgToPdfOptionsSchema.parse(options);
+        validatedRequest = imgToPdfRequestSchema.parse({
+          clientSecret: clientSecret,
+          files: files,
+          options: options,
+        });
+        break;
+
+      case "audio-to-transcript":
+        validatedRequest = audioToTranscriptRequestSchema.parse({
+          clientSecret: clientSecret,
+          files: files,
+          options: options,
+        });
+        break;
+
+      default:
+        return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    }
+
+    let userCredits: number | undefined;
+    let fileDurationMinutes: number | undefined;
+
+    const { userId } = await auth();
+
+    switch (validatedRequest.options.type) {
+      case "audio-to-transcript":
+        const audioDurationResult = await getFileDuration(
+          validatedRequest.files[0] as File,
+        );
+        if (!audioDurationResult.success) {
+          return NextResponse.json(
+            { error: audioDurationResult.error },
+            {
+              status: 400,
+            },
+          );
+        }
+        fileDurationMinutes = audioDurationResult.result;
+        break;
+      case "img-to-pdf":
         break;
       default:
         return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
 
-    let userCredits = undefined;
-    const { userId } = await auth();
+    const toolPriceResult = await getToolPrice(
+      validatedRequest.options.type,
+      fileDurationMinutes,
+    );
+    if (!toolPriceResult.success) {
+      return NextResponse.json(
+        { error: toolPriceResult.error },
+        {
+          status: 400,
+        },
+      );
+    }
 
-    if (clientSecret !== "") {
-      const verificationResult = await verifyStripePayment(clientSecret);
+    if (validatedRequest.clientSecret) {
+      const verificationResult = await verifyStripePayment(
+        validatedRequest.clientSecret,
+        toolPriceResult.result.pricingSingle,
+      );
       if (!verificationResult.success) {
         return NextResponse.json(
           { error: verificationResult.error },
@@ -49,17 +110,17 @@ export async function POST(req: Request) {
         );
       }
 
-      const result = await getUserCredits(userId);
-      if (!result.success) {
+      const userCreditsResult = await getUserCredits(userId);
+      if (!userCreditsResult.success) {
         return NextResponse.json(
-          { error: result.error },
+          { error: userCreditsResult.error },
           {
             status: 400,
           },
         );
       }
 
-      if (result.result < 7) {
+      if (userCreditsResult.result < toolPriceResult.result.pricingCredits) {
         return NextResponse.json(
           { error: "Insufficient credits" },
           {
@@ -68,15 +129,20 @@ export async function POST(req: Request) {
         );
       }
 
-      userCredits = result.result;
+      userCredits = userCreditsResult.result;
     }
 
     const processToolOperation = async () => {
-      switch (validatedOptions.type) {
+      switch (validatedRequest.options.type) {
         case "img-to-pdf":
           return await generatePdf(
-            validatedOptions.images,
-            validatedOptions.selectedImageFit,
+            validatedRequest.files as string[],
+            validatedRequest.options.selectedImageFit,
+          );
+        case "audio-to-transcript":
+          return await generateTranscript(
+            validatedRequest.files[0] as File,
+            validatedRequest.options.language,
           );
         default:
           return null;
@@ -84,7 +150,7 @@ export async function POST(req: Request) {
     };
 
     const toolOutput = await processToolOperation();
-    if (!toolOutput) {
+    if (!toolOutput || !toolOutput.buffer || !toolOutput.type) {
       return NextResponse.json(
         {
           error:
@@ -96,41 +162,40 @@ export async function POST(req: Request) {
 
     const uniqueMetadataId = crypto.randomUUID();
 
-    const sqlResult = await storeUserOperation(
-      userId ?? "anonymous",
-      validatedOptions.title || uniqueMetadataId,
-      validatedOptions.type,
-      new Date().toISOString(),
-      !validatedOptions.saveToProfile,
-    );
+    const [sqlResult, s3Result, updateTotalOperationsResult] =
+      await Promise.all([
+        storeUserOperation(
+          userId ?? "anonymous",
+          validatedRequest.options.title || uniqueMetadataId,
+          validatedRequest.options.type,
+          new Date().toISOString(),
+          !validatedRequest.options.saveToProfile,
+        ),
+        uploadS3File(toolOutput.buffer, {
+          userId: userId ?? undefined,
+          tool: options.type,
+          originalName: options.title || uniqueMetadataId,
+          contentType: toolOutput.type,
+          isTemporary: userId ? !options.saveToProfile : true,
+        }),
+        updateUserTotalOperations(),
+      ]);
     if (!sqlResult.success) {
       return NextResponse.json({ error: sqlResult.error }, { status: 400 });
     }
-
-    const s3Result = await uploadS3File(toolOutput, {
-      userId: userId ?? undefined,
-      tool: options.type,
-      originalName: options.title || uniqueMetadataId,
-      contentType: "application/pdf",
-      isTemporary: userId ? !options.saveToProfile : true,
-    });
     if (!s3Result.success) {
       return NextResponse.json({ error: s3Result.error }, { status: 400 });
     }
-
-    const updateTotalOperationsResult = await updateUserTotalOperations();
     if (!updateTotalOperationsResult.success) {
       return NextResponse.json(
         { error: updateTotalOperationsResult.error },
-        {
-          status: 400,
-        },
+        { status: 400 },
       );
     }
 
-    if (clientSecret !== "") {
+    if (validatedRequest.clientSecret) {
       const updateSessionResult = await updateFulfilledSession(
-        clientSecret,
+        validatedRequest.clientSecret,
         uniqueMetadataId,
       );
       if (!updateSessionResult.success) {
@@ -142,7 +207,18 @@ export async function POST(req: Request) {
         );
       }
     } else {
-      await updateUserCredits(userId ?? "", userCredits! - 7);
+      const updateCreditsResult = await updateUserCredits(
+        userId ?? "",
+        userCredits! - toolPriceResult.result.pricingCredits,
+      );
+      if (!updateCreditsResult.success) {
+        return NextResponse.json(
+          { error: updateCreditsResult.error },
+          {
+            status: 400,
+          },
+        );
+      }
     }
 
     return NextResponse.json({
@@ -150,10 +226,10 @@ export async function POST(req: Request) {
       downloadCode: sqlResult.result,
     });
   } catch (error) {
+    console.error(error);
     return NextResponse.json(
       {
-        error:
-          error instanceof Error ? error.message : "Failed to generate PDF",
+        error: "Internal Server Error. Please try again or contact support.",
       },
       { status: 500 },
     );

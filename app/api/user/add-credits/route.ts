@@ -23,7 +23,10 @@ export async function POST(request: Request) {
       case "payment_intent.succeeded": {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
         const userId = paymentIntent.metadata.userId;
-        if (!userId) {
+        if (
+          !userId ||
+          paymentIntent.metadata.priceId !== "price_1QbliqE2ME1QhtatZ3fAfxt7"
+        ) {
           break;
         }
 

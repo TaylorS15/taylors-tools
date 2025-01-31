@@ -10,19 +10,20 @@ export default function CheckoutButtons({
 }) {
   const router = useRouter();
   const { user } = useUser();
+
   return (
     <div className="flex h-12 w-full justify-between gap-6">
       <button
-        onClick={() => router.push(`?checkout_state=STRIPE_CHECKOUT`)}
-        className="flex h-full w-full items-center justify-center rounded-md bg-indigo-500 font-medium text-white transition-all hover:bg-indigo-400 disabled:bg-indigo-300/50"
+        onMouseDown={() => router.push(`?checkout_state=stripe_checkout`)}
+        className="flex h-full w-full items-center justify-center rounded-lg border border-indigo-500 bg-white font-medium text-indigo-500 transition-all hover:bg-indigo-50 disabled:opacity-50 disabled:hover:bg-white"
         disabled={!enabled}
       >
         {copy} with
-        <img src="/stripe-white.svg" alt="Stripe" className="h-7" />
+        <img src="/stripe-purple.svg" alt="Stripe" className="h-7" />
       </button>
       <button
-        onClick={() => router.push(`?checkout_state=CREDIT_CHECKOUT`)}
-        className="h-full w-full rounded-md bg-green-500 font-medium text-white transition-all hover:bg-green-400 disabled:bg-green-300/50"
+        onMouseDown={() => router.push(`?checkout_state=credit_checkout`)}
+        className="h-full w-full rounded-lg border border-green-500 bg-white font-medium text-green-500 transition-all hover:bg-green-50 disabled:opacity-50 disabled:hover:bg-white"
         disabled={!enabled || user === undefined || user === null}
       >
         {copy} with Credits

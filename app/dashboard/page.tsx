@@ -91,7 +91,7 @@ export default function Dashboard() {
         <h1 className="w-min bg-gradient-to-br from-blue-700 from-10% via-cyan-400 to-blue-700 to-90% bg-clip-text text-2xl font-bold text-transparent drop-shadow-md sm:text-3xl lg:text-4xl">
           Dashboard
         </h1>
-        <div className="flex w-full flex-col gap-4 rounded-lg border border-zinc-200 p-2 text-sm">
+        <div className="flex w-full flex-col gap-4 rounded-lg border border-zinc-200 bg-white p-2 text-sm">
           <div className="flex w-full flex-wrap items-center justify-between">
             <p>Signed in as</p>
             <p>{user?.primaryEmailAddress?.emailAddress}</p>
@@ -123,11 +123,11 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="flex h-72 w-full flex-col overflow-y-scroll rounded-lg border border-zinc-200 text-sm md:h-full">
+        <div className="flex h-72 w-full flex-col overflow-y-scroll rounded-lg border border-zinc-200 bg-white text-sm md:h-full">
           {tools.map((tool) => (
             <div
               key={tool.name}
-              className={`${selectedTool === tool.url ? "bg-blue-50" : "bg-zinc-50"} flex h-14 w-full cursor-pointer items-center gap-4 px-2 transition hover:bg-zinc-100`}
+              className={`${selectedTool === tool.url ? "bg-blue-50" : "bg-white"} flex h-14 w-full cursor-pointer items-center gap-4 px-2 transition hover:bg-zinc-100`}
               onClick={() => setSelectedTool(tool.url)}
             >
               <Image alt="tool logo" src={tool.logo} width={25} height={25} />
@@ -138,7 +138,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="flex h-max w-full max-w-xl flex-col overflow-y-scroll rounded-lg border border-zinc-200 md:h-[calc(100dvh-14rem)] md:w-3/5 md:max-w-none">
+      <div className="flex h-max w-full max-w-xl flex-col overflow-y-scroll rounded-lg border border-zinc-200 bg-white md:h-[calc(100dvh-14rem)] md:w-3/5 md:max-w-none">
         {operationsQuery.isLoading ? (
           <div className="flex h-full w-full items-center justify-center">
             <LoaderCircle className="h-7 w-7 animate-spin text-zinc-500" />
@@ -171,11 +171,12 @@ export default function Dashboard() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.1 }}
-              className="flex h-[90dvh] w-full max-w-lg overflow-y-scroll rounded-lg border border-zinc-200 bg-zinc-50 p-4 shadow-lg"
+              className="flex max-h-[90dvh] w-full max-w-lg overflow-y-scroll rounded-lg border border-zinc-200 bg-zinc-50 p-4 shadow-lg"
             >
               <StripeCheckout
                 stripePriceId="price_1QbliqE2ME1QhtatZ3fAfxt7"
                 onPaymentSuccess={onPaymentSuccess}
+                requestOptions={{ addingUserCredits: true }}
               />
               <button
                 className="absolute right-2 top-2 rounded-lg bg-zinc-50 p-1.5 hover:bg-zinc-100"
@@ -212,6 +213,10 @@ function Operation({
       <div className="w-max">
         <p>{operation.created_at.split("T")[0]}</p>
         <p className="text-xs text-zinc-500">Created at</p>
+      </div>
+      <div className="w-max">
+        <p>{operation.download_code}</p>
+        <p className="text-xs text-zinc-500">Download Code</p>
       </div>
       <button
         onClick={async () => {

@@ -11,9 +11,13 @@ const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_API_KEY!);
 export default function StripeCheckout({
   stripePriceId,
   onPaymentSuccess,
+  requestOptions,
 }: {
   stripePriceId: string;
   onPaymentSuccess: (clientSecret: string) => void;
+  requestOptions?: {
+    fileDurationMinutes?: number;
+  };
 }) {
   const [clientSecret, setClientSecret] = useState("");
   const [hasCompleted, setHasCompleted] = useState(false);
@@ -24,7 +28,10 @@ export default function StripeCheckout({
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ stripePriceId }),
+      body: JSON.stringify({
+        stripePriceId,
+        options: requestOptions,
+      }),
     })
       .then((res) => {
         if (!res.ok) {
@@ -53,7 +60,7 @@ export default function StripeCheckout({
   }, [hasCompleted]);
 
   return (
-    <div className="mx-auto w-full max-w-lg overflow-y-scroll">
+    <div className="mx-auto w-full max-w-md overflow-y-scroll">
       <EmbeddedCheckoutProvider stripe={stripePromise} options={options}>
         <EmbeddedCheckout />
       </EmbeddedCheckoutProvider>

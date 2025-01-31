@@ -10,7 +10,7 @@ export default function LoadingWindow() {
       initial="enter"
       animate="center"
       exit="exit"
-      className="my-auto flex flex-col items-center justify-center gap-4"
+      className="my-auto flex flex-col items-center justify-center gap-6"
     >
       <>
         <p className="text-xl font-semibold text-blue-600">Loading...</p>

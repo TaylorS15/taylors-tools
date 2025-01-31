@@ -2,6 +2,13 @@ import ToolCard from "@/components/tool-card";
 import DownloadCard from "@/components/download-card";
 import RequestForm from "@/components/request-form";
 import { getTools } from "@/lib/server";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Info } from "lucide-react";
 
 export default async function Home() {
   const tools = await getTools();
@@ -27,27 +34,25 @@ export default async function Home() {
       </div>
 
       <div className="flex w-full flex-col justify-center gap-6">
-        <h3 className="text-left text-xl font-semibold text-blue-500  lg:text-2xl">
+        <h3 className="text-left text-xl font-semibold text-blue-500 lg:text-2xl">
           Pricing
         </h3>
-        <p className="-mt-3 max-w-xl text-left text-3xl font-medium  md:text-4xl">
+        <p className="-mt-3 max-w-xl text-left text-3xl font-medium md:text-4xl">
           Simple and cost effective pricing.
         </p>
-        <p className="-mt-5 max-w-xl text-left text-3xl font-medium  md:text-4xl">
+        <p className="-mt-5 max-w-xl text-left text-3xl font-medium md:text-4xl">
           With or without an account.
         </p>
-        <p className="max-w-xl text-left text-base text-zinc-600  lg:text-lg">
+        <p className="max-w-xl text-left text-base text-zinc-600 lg:text-lg">
           You can use any tool with or without an account, and every tool has a
           fixed cost. Although you can create an account and add credits for
           cheaper use, single use for any tool is available and you&apos;re
           charged after you&apos;ve previewed the final output.
         </p>
-        <div className="mx-auto mt-6 flex w-full flex-col rounded-md border-2 shadow-lg md:max-w-3xl">
-          <div className="flex w-full gap-8 border-b p-2">
+        <div className="mx-auto mt-6 flex w-full flex-col rounded-md border bg-white md:max-w-3xl">
+          <div className="flex w-full gap-8 border-b p-2 text-sm">
             <p className="flex-1">Tool</p>
-            <p className="w-16 text-center text-zinc-600 md:w-28">
-              One time use
-            </p>
+            <p className="w-16 text-center text-zinc-600 md:w-28">Single use</p>
             <p className="w-16 text-center text-zinc-600 md:w-44">
               Credits ($1 = 10 credits)
             </p>
@@ -57,18 +62,22 @@ export default async function Home() {
             tools.result.map((tool) => {
               return (
                 <div key={tool.name} className="flex w-full gap-8 border-b p-2">
-                  <p className="w-max flex-1">{tool.name}</p>
+                  <p className="texxt-zinc-600 w-max flex-1">{tool.name}</p>
                   <p className="w-16 text-center text-zinc-600 md:w-28">
                     ${tool.pricing_single / 100}
-                    {tool.url === "audio-to-transcript" ? "/min" : ""}
+                    {tool.adjustable_pricing ? "/min*" : ""}
                   </p>
                   <p className="w-16 text-center text-zinc-600 md:w-44">
                     {tool.pricing_credits}
-                    {tool.url === "audio-to-transcript" ? "/min" : ""}
+                    {tool.adjustable_pricing ? "/min*" : ""}
                   </p>
                 </div>
               );
             })}
+
+          <p className="px-2 py-1 text-left text-xs font-medium text-zinc-500">
+            Minimum cost of tool usage is $1 or 5 credits.
+          </p>
         </div>
       </div>
       <div className="flex w-full flex-col justify-center gap-6">

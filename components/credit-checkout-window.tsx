@@ -9,11 +9,15 @@ import { containerVariants } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 
 export default function CreditCheckoutWindow({
+  copy,
   onPaymentSuccess,
   toolQuery,
+  fileDurationMinutes,
 }: {
+  copy: string;
   onPaymentSuccess: (clientSecret: string) => void;
   toolQuery: UseQueryResult<z.infer<typeof toolSchema> | undefined>;
+  fileDurationMinutes?: number;
 }) {
   const router = useRouter();
   return (
@@ -23,10 +27,10 @@ export default function CreditCheckoutWindow({
       initial="enter"
       animate="center"
       exit="exit"
-      className="flex h-full flex-col gap-4"
+      className=""
     >
       <button
-        onClick={() => router.push(`?checkout_state=INPUT`)}
+        onMouseDown={() => router.push(`?checkout_state=input`)}
         className="flex w-min items-center gap-2 text-blue-600 hover:underline"
       >
         <ArrowLeft className="h-4 w-4" />
@@ -34,8 +38,10 @@ export default function CreditCheckoutWindow({
       </button>
       {toolQuery.data ? (
         <CreditCheckout
+          copy={copy}
           tool={toolQuery.data}
           onPaymentSuccess={onPaymentSuccess}
+          fileDurationMinutes={fileDurationMinutes}
         />
       ) : (
         <Skeleton className="h-12 w-full" />

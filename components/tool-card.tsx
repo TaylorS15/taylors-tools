@@ -7,9 +7,9 @@ import Image from "next/image";
 export default function ToolCard(props: z.infer<typeof toolSchema>) {
   return (
     <div
-      className={`group flex max-h-96 min-h-80 w-full flex-col justify-between gap-4 rounded-md bg-zinc-200 p-0.5 shadow-lg transition-all duration-75 hover:shadow-2xl sm:min-w-64 sm:max-w-96`}
+      className={`group flex max-h-96 min-h-80 w-full flex-col justify-between gap-4 rounded-lg bg-zinc-200 p-px transition-all duration-75 sm:min-w-64 sm:max-w-96`}
     >
-      <div className="flex h-full w-full flex-col gap-4 rounded-[calc(0.5rem-4px)] bg-white p-4">
+      <div className="flex h-full w-full flex-col gap-4 rounded-[calc(0.7rem-4px)] bg-white p-4">
         <p className="h-14 w-max rounded-md bg-zinc-100 p-2 font-medium">
           {props.name}
         </p>

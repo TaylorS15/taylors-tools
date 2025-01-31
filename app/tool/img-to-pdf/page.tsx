@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getToolData } from "@/lib/server";
@@ -8,7 +8,6 @@ import { useUser } from "@clerk/nextjs";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { Toaster } from "@/components/ui/toaster";
 import { AnimatePresence, motion } from "motion/react";
 import CheckoutButtons from "@/components/checkout-buttons";
 import useFirstMount from "@/hooks/use-first-mount";
@@ -19,6 +18,7 @@ import { containerVariants } from "@/lib/utils";
 import StripeCheckoutWindow from "@/components/stripe-checkout-window";
 import FileInput from "@/components/file-input";
 import { useFileInputContext } from "@/components/file-input-provider";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 export default function ImagesToPdf() {
   const { user } = useUser();
@@ -32,14 +32,22 @@ export default function ImagesToPdf() {
     "FIT" | "STRETCH" | "FILL"
   >("FIT");
 
-  const [checkoutState, setCheckoutState] = useState<
-    "INPUT" | "CREDIT_CHECKOUT" | "STRIPE_CHECKOUT" | "LOADING" | "SUCCESS"
-  >("INPUT");
+  const path = usePathname();
+  const toolUrl = path.split("/")[2].split("?")[0];
+  const params = useSearchParams();
+  const router = useRouter();
+  const checkoutState = params.get("checkout_state") as
+    | "input"
+    | "credit_checkout"
+    | "stripe_checkout"
+    | "loading"
+    | "success";
+
   const [downloadLink, setDownloadLink] = useState("");
   const [downloadCode, setDownloadCode] = useState("");
 
   usePreventUnload({
-    enabled: checkoutState === "LOADING" || checkoutState === "SUCCESS",
+    enabled: checkoutState === "loading" || checkoutState === "success",
     message: "Please wait until the conversion is complete before leaving.",
   });
 
@@ -62,41 +70,31 @@ export default function ImagesToPdf() {
   });
 
   async function onPaymentSuccess(clientSecret: string) {
-    setCheckoutState("LOADING");
-    const images = previews.map((preview) => preview.file);
+    router.push(`?checkout_state=loading`, { scroll: false });
 
-    const encodedImages = await Promise.all(
-      images.map((image) => {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = reject;
-          reader.readAsDataURL(image);
-        });
+    const formData = new FormData();
+
+    formData.append("clientSecret", clientSecret);
+    for (const preview of previews) {
+      formData.append("files", preview.file);
+    }
+    formData.append(
+      "options",
+      JSON.stringify({
+        type: toolUrl,
+        saveToProfile: user ? saveToProfile : false,
+        title,
+        selectedImageFit: selectedImageFit,
       }),
     );
 
-    const payload = {
-      clientSecret,
-      options: {
-        type: "img-to-pdf",
-        images: encodedImages,
-        saveToProfile: user ? saveToProfile : false,
-        title,
-        selectedImageFit,
-      },
-    };
-
     const response = await fetch("/api/tool", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
+      body: formData,
     });
 
     if (!response.ok) {
-      setCheckoutState("INPUT");
+      router.push(`?checkout_state=input`, { scroll: false });
       const error = await response.json();
       toast({
         title: "Error",
@@ -113,62 +111,18 @@ export default function ImagesToPdf() {
 
     setPreviews([]);
     setTitle("");
-    setCheckoutState("SUCCESS");
+    router.push(`?checkout_state=success`, { scroll: false });
   }
 
+  useEffect(() => {
+    router.push(`?checkout_state=input`, { scroll: false });
+  }, []);
+
   return (
-    <main className="flex w-full flex-col-reverse items-center md:flex-row md:items-start">
-      <div className="h-[calc(100dvh-14rem)] w-full max-w-xl p-4 md:w-2/5">
-        <div className="relative h-full w-full max-w-xl overflow-y-scroll rounded-md bg-zinc-100 px-4 py-1">
-          {previews.map((preview, index) => (
-            <div key={preview.id} className="group relative my-3">
-              <div className="aspect-[1/1.4] overflow-hidden rounded-lg bg-gray-100">
-                <img
-                  src={preview.previewUrl}
-                  alt={preview.file.name}
-                  loading="lazy"
-                  className="h-full w-full object-cover transition-transform duration-100"
-                />
-              </div>
-              <div className="absolute left-0 top-0 flex h-7 w-max items-center gap-2 bg-white/60 px-2 py-1.5 text-xs text-gray-500">
-                <p
-                  className="truncate text-xs text-gray-900"
-                  title={preview.file.name}
-                >
-                  {preview.file.name}
-                </p>
-              </div>
-              <p className="absolute bottom-0 left-0 flex h-7 w-max items-center rounded-bl-lg bg-white/60 px-2 py-1.5 text-xs text-gray-500">
-                {index + 1} of {previews.length}
-              </p>
-              <button
-                onClick={() => {
-                  setPreviews((prev) => {
-                    const fileToRemove = prev.find((p) => p.id === preview.id);
-                    if (fileToRemove) {
-                      URL.revokeObjectURL(fileToRemove.previewUrl);
-                    }
-
-                    const newPreviews = prev.filter((p) => p.id !== preview.id);
-                    return newPreviews;
-                  });
-                }}
-                className="absolute right-2 top-2 rounded-full bg-white/80 p-1.5 text-gray-600 hover:bg-white hover:text-gray-900"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          ))}
-
-          <div
-            className={`${checkoutState === "LOADING" ? "absolute inset-0" : "hidden"} bg-white/50 backdrop-blur-sm`}
-          />
-        </div>
-      </div>
-
-      <div className="flex h-max w-full max-w-xl flex-col gap-6 overflow-x-clip p-4 md:h-[calc(100dvh-14rem)] md:w-3/5 md:max-w-none">
+    <main className="mx-auto w-full max-w-3xl overflow-x-clip">
+      <div className="flex h-max w-full flex-col gap-6">
         <AnimatePresence mode="wait">
-          {checkoutState === "INPUT" && (
+          {!checkoutState || checkoutState === "input" ? (
             <motion.div
               key="input"
               variants={containerVariants}
@@ -178,7 +132,7 @@ export default function ImagesToPdf() {
               className="mt-auto flex h-full flex-col gap-4"
             >
               <h1 className="mb-auto text-center text-xl font-semibold text-blue-600">
-                Image(s) to PDF
+                {toolQuery.data?.name}
               </h1>
               <input
                 type="text"
@@ -246,21 +200,27 @@ export default function ImagesToPdf() {
                 />
               </div>
             </motion.div>
-          )}
-          {checkoutState === "CREDIT_CHECKOUT" && (
-            <CreditCheckoutWindow
-              onPaymentSuccess={onPaymentSuccess}
-              toolQuery={toolQuery}
-            />
-          )}
-          {checkoutState === "STRIPE_CHECKOUT" && (
-            <StripeCheckoutWindow
-              onPaymentSuccess={onPaymentSuccess}
-              toolQuery={toolQuery}
-            />
-          )}
-          {checkoutState === "LOADING" && <LoadingWindow />}
-          {checkoutState === "SUCCESS" && (
+          ) : null}
+          {checkoutState === "credit_checkout" &&
+            toolQuery.data &&
+            previews.length > 0 && (
+              <CreditCheckoutWindow
+                copy={"Convert"}
+                onPaymentSuccess={onPaymentSuccess}
+                toolQuery={toolQuery}
+                fileDurationMinutes={previews[0].length}
+              />
+            )}
+          {checkoutState === "stripe_checkout" &&
+            toolQuery.data &&
+            previews.length > 0 && (
+              <StripeCheckoutWindow
+                onPaymentSuccess={onPaymentSuccess}
+                toolQuery={toolQuery}
+              />
+            )}
+          {checkoutState === "loading" && <LoadingWindow />}
+          {checkoutState === "success" && (
             <PurchaseSuccessWindow
               downloadLink={downloadLink}
               downloadCode={downloadCode}
@@ -269,7 +229,53 @@ export default function ImagesToPdf() {
         </AnimatePresence>
       </div>
 
-      <Toaster />
+      {previews.length > 0 && (
+        <div className="relative mt-6 aspect-[1/1.4] w-full overflow-y-scroll rounded-lg border border-zinc-200 bg-white px-4 py-1">
+          {previews.map((preview, index) => (
+            <div key={preview.id} className="group relative my-3">
+              <div className="aspect-[1/1.4] overflow-hidden rounded-lg bg-gray-100">
+                <img
+                  src={preview.previewUrl}
+                  alt={preview.file.name}
+                  loading="lazy"
+                  className="h-full w-full object-cover transition-transform duration-100"
+                />
+              </div>
+              <div className="absolute left-0 top-0 flex h-7 w-max items-center gap-2 bg-white/60 px-2 py-1.5 text-xs text-gray-500">
+                <p
+                  className="truncate text-xs text-gray-900"
+                  title={preview.file.name}
+                >
+                  {preview.file.name}
+                </p>
+              </div>
+              <p className="absolute bottom-0 left-0 flex h-7 w-max items-center rounded-bl-lg bg-white/60 px-2 py-1.5 text-xs text-gray-500">
+                {index + 1} of {previews.length}
+              </p>
+              <button
+                onClick={() => {
+                  setPreviews((prev) => {
+                    const fileToRemove = prev.find((p) => p.id === preview.id);
+                    if (fileToRemove) {
+                      URL.revokeObjectURL(fileToRemove.previewUrl);
+                    }
+
+                    const newPreviews = prev.filter((p) => p.id !== preview.id);
+                    return newPreviews;
+                  });
+                }}
+                className="absolute right-2 top-2 rounded-full bg-white/80 p-1.5 text-gray-600 hover:bg-white hover:text-gray-900"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
+
+          <div
+            className={`${checkoutState === "loading" ? "absolute inset-0" : "hidden"} bg-white/50 backdrop-blur-sm`}
+          />
+        </div>
+      )}
     </main>
   );
 }

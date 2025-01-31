@@ -7,6 +7,7 @@ import { cache } from "react";
 import { unstable_cache } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 import { deleteS3File, getSignedS3DownloadUrl } from "@/lib/s3";
+import { parseBuffer } from "music-metadata";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -22,7 +23,8 @@ export type ApiResponse<T> =
 
 export async function verifyStripePayment(
   clientSecret: string,
-): Promise<ApiResponse<void>> {
+  toolPrice: number,
+): Promise<ApiResponse<number>> {
   try {
     const session = await stripe.checkout.sessions.retrieve(
       clientSecret.split("_secret_")[0],
@@ -39,7 +41,15 @@ export async function verifyStripePayment(
       };
     }
 
-    return { success: true, result: undefined };
+    if (!session.amount_total) {
+      return { success: false, error: "Failed to verify payment" };
+    }
+
+    if (session.amount_total < toolPrice) {
+      return { success: false, error: "Failed to verify payment" };
+    }
+
+    return { success: true, result: session.amount_total };
   } catch (error) {
     console.error(error);
     return {
@@ -364,7 +374,7 @@ export async function updateUserTotalOperations(): Promise<
     const { userId } = await auth();
 
     await turso.execute({
-      sql: "UPDATE users SET total_operations = total_operations + 1 WHERE id = ?",
+      sql: "UPDATE users SET total_operations = total_operations + 1 WHERE user_id = ?",
       args: [userId],
     });
 
@@ -377,6 +387,125 @@ export async function updateUserTotalOperations(): Promise<
     return {
       success: false,
       error: "Failed to update user total operations. Please try again.",
+    };
+  }
+}
+
+export async function getToolPrice(
+  tool: string,
+  fileDurationMinutes?: number,
+): Promise<ApiResponse<{ pricingCredits: number; pricingSingle: number }>> {
+  try {
+    const response = await turso.execute({
+      sql: "SELECT pricing_credits, pricing_single, adjustable_pricing FROM tools WHERE url = ?",
+      args: [tool],
+    });
+
+    if (
+      !response.rows[0] ||
+      !response.rows[0].pricing_credits ||
+      !response.rows[0].pricing_single
+    ) {
+      return {
+        success: false,
+        error: "Invalid tool",
+      };
+    }
+
+    const { pricing_credits, pricing_single, adjustable_pricing } =
+      response.rows[0];
+
+    if (adjustable_pricing === 1 && fileDurationMinutes) {
+      const creditPrice =
+        (pricing_credits as number) * fileDurationMinutes < 5
+          ? 5
+          : (pricing_credits as number) * fileDurationMinutes;
+
+      const stripePrice =
+        (pricing_single as number) * fileDurationMinutes <
+        100 / (pricing_single as unknown as number)
+          ? 100 / (pricing_single as unknown as number)
+          : (pricing_single as number) * fileDurationMinutes;
+
+      return {
+        success: true,
+        result: {
+          pricingCredits: creditPrice,
+          pricingSingle: stripePrice,
+        },
+      };
+    }
+
+    return {
+      success: true,
+      result: {
+        pricingCredits: response.rows[0].pricing_credits as number,
+        pricingSingle: response.rows[0].pricing_single as number,
+      },
+    };
+  } catch (error) {
+    console.error(error);
+    return {
+      success: false,
+      error: "Failed to get tool price. Please try again.",
+    };
+  }
+}
+
+export async function getFileDuration(
+  file: File,
+): Promise<ApiResponse<number>> {
+  try {
+    const buffer = await file.arrayBuffer();
+    const uint8Array = new Uint8Array(buffer);
+
+    const { format } = await parseBuffer(uint8Array);
+
+    if (!format.duration) {
+      return {
+        success: false,
+        error: "Failed to get file duration. Please try again.",
+      };
+    }
+
+    return {
+      success: true,
+      result: parseFloat((format.duration / 60).toFixed(2)),
+    };
+  } catch (error) {
+    console.error(error);
+    return {
+      success: false,
+      error: "Failed to get file duration. Please try again.",
+    };
+  }
+}
+
+export async function getToolType(
+  stripePriceId: string,
+): Promise<ApiResponse<string>> {
+  try {
+    const response = await turso.execute({
+      sql: "SELECT url FROM tools WHERE stripe_price_id = ?",
+      args: [stripePriceId],
+    });
+
+    if (response.rows.length === 0 || !response.rows[0].url) {
+      return {
+        success: false,
+        error: "Invalid stripe price ID",
+      };
+    }
+
+    return {
+      success: true,
+      result: response.rows[0].url as string,
+    };
+  } catch (error) {
+    console.error(error);
+    return {
+      success: false,
+      error: "Failed to get tool type. Please try again.",
     };
   }
 }

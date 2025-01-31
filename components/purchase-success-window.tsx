@@ -23,7 +23,7 @@ export default function PurchaseSuccessWindow({
       className="flex h-full flex-col justify-between"
     >
       <button
-        onClick={() => router.push(`?checkout_state=INPUT`)}
+        onMouseDown={() => router.push(`?checkout_state=input`)}
         className="flex items-center gap-2 text-blue-600 hover:underline"
       >
         <ArrowLeft className="h-4 w-4" />
@@ -56,7 +56,7 @@ export default function PurchaseSuccessWindow({
             <p className="">{downloadCode}</p>
             <Copy
               className="h-8 w-8 cursor-pointer rounded-lg p-1 hover:bg-zinc-100"
-              onClick={() => {
+              onMouseDown={() => {
                 navigator.clipboard.writeText(downloadCode);
                 toast({
                   title: "Copied to clipboard!",

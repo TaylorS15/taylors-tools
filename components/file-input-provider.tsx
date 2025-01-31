@@ -5,11 +5,10 @@ export interface FilePreview {
   id: string;
   file: File;
   previewUrl: string;
+  length?: number;
 }
 
 type FileInputContextValue = {
-  files: File[];
-  setFiles: (files: File[] | ((prev: File[]) => File[])) => void;
   previews: FilePreview[];
   setPreviews: (
     previews: FilePreview[] | ((prev: FilePreview[]) => FilePreview[]),
@@ -35,7 +34,6 @@ export default function FileInputProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<FilePreview[]>([]);
 
   useEffect(() => {
@@ -50,8 +48,6 @@ export default function FileInputProvider({
   return (
     <FileInputContext.Provider
       value={{
-        files,
-        setFiles,
         previews,
         setPreviews,
       }}
