@@ -176,7 +176,6 @@ export default function Dashboard() {
               <StripeCheckout
                 stripePriceId="price_1QbliqE2ME1QhtatZ3fAfxt7"
                 onPaymentSuccess={onPaymentSuccess}
-                requestOptions={{ addingUserCredits: true }}
               />
               <button
                 className="absolute right-2 top-2 rounded-lg bg-zinc-50 p-1.5 hover:bg-zinc-100"

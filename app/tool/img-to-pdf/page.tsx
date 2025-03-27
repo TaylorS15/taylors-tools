@@ -16,9 +16,13 @@ import LoadingWindow from "@/components/loading-window";
 import PurchaseSuccessWindow from "@/components/purchase-success-window";
 import { containerVariants } from "@/lib/utils";
 import StripeCheckoutWindow from "@/components/stripe-checkout-window";
-import FileInput from "@/components/file-input";
 import { useFileInputContext } from "@/components/file-input-provider";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import dynamic from "next/dynamic";
+
+const DynamicFileInput = dynamic(() => import("@/components/file-input"), {
+  ssr: false,
+});
 
 export default function ImagesToPdf() {
   const { user } = useUser();
@@ -182,7 +186,7 @@ export default function ImagesToPdf() {
               </div>
 
               <div className="flex w-full flex-col justify-between gap-6">
-                <FileInput
+                <DynamicFileInput
                   numberOfFiles={20}
                   maxSizeBytes={5 * 1024 * 1024}
                   allowedTypes={[

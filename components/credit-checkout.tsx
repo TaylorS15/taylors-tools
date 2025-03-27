@@ -117,7 +117,6 @@ export default function CreditCheckout({
                   userQuery.refetch();
                   setIsAddCreditsModalOpen(false);
                 }}
-                requestOptions={{ addingUserCredits: true }}
               />
               <button
                 className="absolute right-2 top-2 rounded-lg bg-zinc-50 p-1.5 hover:bg-zinc-100"

@@ -16,7 +16,11 @@ import LoadingWindow from "@/components/loading-window";
 import CreditCheckoutWindow from "@/components/credit-checkout-window";
 import StripeCheckoutWindow from "@/components/stripe-checkout-window";
 import { useFileInputContext } from "@/components/file-input-provider";
-import FileInput from "@/components/file-input";
+import dynamic from "next/dynamic";
+
+const DynamicFileInput = dynamic(() => import("@/components/file-input"), {
+  ssr: false,
+});
 
 const AlluraFont = Allura({ subsets: ["latin"], weight: "400" });
 
@@ -152,7 +156,7 @@ export default function PdfSigning() {
               </div>
 
               <div className="flex w-full flex-col justify-between gap-6">
-                <FileInput
+                <DynamicFileInput
                   numberOfFiles={1}
                   maxSizeBytes={20 * 1024 * 1024}
                   allowedTypes={["application/pdf"]}

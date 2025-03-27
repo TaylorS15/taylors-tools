@@ -16,7 +16,6 @@ import PurchaseSuccessWindow from "@/components/purchase-success-window";
 import { cn, containerVariants } from "@/lib/utils";
 import StripeCheckoutWindow from "@/components/stripe-checkout-window";
 import { useFileInputContext } from "@/components/file-input-provider";
-import FileInput from "@/components/file-input";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AudioLines, Check, X } from "lucide-react";
 import {
@@ -32,6 +31,11 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import dynamic from "next/dynamic";
+
+const DynamicFileInput = dynamic(() => import("@/components/file-input"), {
+  ssr: false,
+});
 
 export default function ToolPage() {
   const { user } = useUser();
@@ -228,7 +232,7 @@ export default function ToolPage() {
               </div>
 
               <div className="flex w-full flex-col justify-between gap-6">
-                <FileInput
+                <DynamicFileInput
                   numberOfFiles={1}
                   maxSizeBytes={2 * 1024 * 1024 * 1024}
                   allowedTypes={[
