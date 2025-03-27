@@ -136,7 +136,7 @@ export async function POST(req: NextRequest) {
       switch (validatedRequest.options.type) {
         case "img-to-pdf":
           return await generatePdf(
-            validatedRequest.files as string[],
+            validatedRequest.files as File[],
             validatedRequest.options.selectedImageFit,
           );
         case "audio-to-transcript":
