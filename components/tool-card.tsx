@@ -14,19 +14,35 @@ export default function ToolCard(props: z.infer<typeof toolSchema>) {
           {props.name}
         </p>
         <div className="flex w-full items-center gap-4">
-          <Image alt="tool logo" src={props.logo} width={64} height={64} />
+          <Image
+            alt="tool logo"
+            src={props.logo}
+            width={64}
+            height={64}
+            className={`${props.enabled ? "opacity-100" : "opacity-50"}`}
+          />
           <p className="text-lg font-medium">{props.title}</p>
         </div>
-        <p className="h-full w-full max-w-96">{props.description}</p>
-        <Link
-          href={`/tool/${props.url}`}
-          className="mt-auto w-full font-medium text-blue-600 transition-all hover:text-black hover:underline group-hover:scale-100 group-hover:opacity-100 md:scale-95 md:opacity-0"
-        >
-          <p className="flex justify-between">
-            {props.cta}
-            <ArrowRight />
-          </p>
-        </Link>
+        <p className="h-full max-w-96">{props.description}</p>{" "}
+        {props.enabled ? (
+          <Link
+            href={`/tool/${props.url}
+            w-full`}
+            className="mt-auto w-full font-medium text-blue-600 transition-all hover:text-black hover:underline group-hover:scale-100 group-hover:opacity-100 md:scale-95 md:opacity-0"
+          >
+            <p className="flex justify-between">
+              {props.cta}
+              <ArrowRight />
+            </p>
+          </Link>
+        ) : (
+          <div className="mt-auto w-full font-medium text-blue-600/50 transition-all hover:text-black hover:underline group-hover:scale-100 group-hover:opacity-100 md:scale-95 md:opacity-0">
+            <p className="flex justify-between">
+              {props.cta}
+              <ArrowRight />
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

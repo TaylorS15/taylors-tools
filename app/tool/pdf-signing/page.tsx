@@ -29,7 +29,6 @@ export default function PdfSigning() {
   const [saveToProfile, setSaveToProfile] = useState(true);
   const [title, setTitle] = useState("");
   const [signature, setSignature] = useState("");
-  // const [date, setDate] = useState("");
 
   const [downloadLink, setDownloadLink] = useState("");
   const [downloadCode, setDownloadCode] = useState("");
@@ -128,7 +127,7 @@ export default function PdfSigning() {
               />
               <input
                 type="text"
-                className={`${AlluraFont.className} h-28 w-full rounded-lg border border-zinc-200 p-2 text-center text-4xl focus:outline-none active:outline-none md:text-5xl lg:text-6xl`}
+                className={`${AlluraFont.className} h-20 w-full rounded-lg border border-zinc-200 p-2 text-center text-4xl focus:outline-none active:outline-none md:text-5xl lg:text-6xl`}
                 placeholder="Jane Doe"
                 value={signature}
                 onChange={(e) => setSignature(e.target.value)}
@@ -166,6 +165,7 @@ export default function PdfSigning() {
           )}
           {checkoutState === "CREDIT_CHECKOUT" && (
             <CreditCheckoutWindow
+              copy="Generate"
               onPaymentSuccess={onPaymentSuccess}
               toolQuery={toolQuery}
             />

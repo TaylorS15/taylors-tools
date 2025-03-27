@@ -2,13 +2,6 @@ import ToolCard from "@/components/tool-card";
 import DownloadCard from "@/components/download-card";
 import RequestForm from "@/components/request-form";
 import { getTools } from "@/lib/server";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Info } from "lucide-react";
 
 export default async function Home() {
   const tools = await getTools();
