@@ -10,12 +10,16 @@ export async function POST(req: Request) {
   try {
     const { stripePriceId, options } = await req.json();
 
+    console.log(stripePriceId, options);
+
     if (!stripePriceId) {
+      console.log("no priceid");
       return NextResponse.json({ error: "Invalid Request" }, { status: 400 });
     }
 
-    const validatedOptions = stripeClientSecretOptionsSchema.parse(options);
-    if (!validatedOptions) {
+    const validatedOptions = stripeClientSecretOptionsSchema.safeParse(options);
+    if (!validatedOptions.success) {
+      console.log("broken options");
       return NextResponse.json({ error: "Invalid Request" }, { status: 400 });
     }
 
@@ -33,7 +37,7 @@ export async function POST(req: Request) {
 
     const toolPriceResult = await getToolPrice(
       toolTypeResult.result,
-      validatedOptions.fileDurationMinutes,
+      validatedOptions.data?.fileDurationMinutes,
     );
     if (!toolPriceResult.success) {
       return NextResponse.json(
@@ -44,15 +48,13 @@ export async function POST(req: Request) {
       );
     }
 
-    console.log(toolPriceResult.result);
-
     // Using client provided info to determine pricing, verified on tool usage to match paid price.
     const session = await stripe.checkout.sessions.create({
       line_items: [
         {
           price: stripePriceId,
           quantity:
-            validatedOptions && validatedOptions.fileDurationMinutes
+            validatedOptions.data && validatedOptions.data.fileDurationMinutes
               ? toolPriceResult.result.pricingSingle
               : 1,
         },

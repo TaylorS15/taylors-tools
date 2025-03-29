@@ -174,7 +174,7 @@ export default function Dashboard() {
               className="flex max-h-[90dvh] w-full max-w-lg overflow-y-scroll rounded-lg border border-zinc-200 bg-zinc-50 p-4 shadow-lg"
             >
               <StripeCheckout
-                stripePriceId="price_1QbliqE2ME1QhtatZ3fAfxt7"
+                stripePriceId="price_1R7dEKE2ME1QhtatgzJNiCiI"
                 onPaymentSuccess={onPaymentSuccess}
               />
               <button
